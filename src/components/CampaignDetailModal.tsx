@@ -14,7 +14,9 @@ interface CampaignDetailModalProps {
     campaign: any
     onUpdate: (updatedCampaign: any) => void
     onArchive: (id: string) => void
+    onStatusChange: (id: string, status: any) => void
     canEdit: boolean
+    role: string
 }
 
 export function CampaignDetailModal({
@@ -23,7 +25,9 @@ export function CampaignDetailModal({
     campaign,
     onUpdate,
     onArchive,
-    canEdit
+    onStatusChange,
+    canEdit,
+    role
 }: CampaignDetailModalProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -65,6 +69,13 @@ export function CampaignDetailModal({
 
     if (!campaign) return null
 
+    const statuses = [
+        { value: 'waiting', label: 'Wartet', color: 'bg-zinc-100 text-zinc-600' },
+        { value: 'in_preparation', label: 'Vorbereitung', color: 'bg-amber-100 text-amber-700' },
+        { value: 'live', label: 'Live', color: 'bg-blue-100 text-blue-700' },
+        { value: 'completed', label: 'Fertig', color: 'bg-emerald-100 text-emerald-700' },
+    ]
+
     return (
         <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
             <Dialog.Portal>
@@ -80,19 +91,39 @@ export function CampaignDetailModal({
                         <div className="space-y-10">
                             {/* Header Section */}
                             <div className="space-y-4">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-4">
                                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] bg-blue-50 px-3 py-1 rounded-full">
                                         Kampagne #{campaign.priority}
                                     </span>
-                                    <span className={cn(
-                                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
-                                        campaign.status === 'waiting' ? 'bg-zinc-100 text-zinc-600 border-zinc-200' :
-                                            campaign.status === 'in_preparation' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                campaign.status === 'live' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                    'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                    )}>
-                                        {campaign.status}
-                                    </span>
+
+                                    {role === 'agency' ? (
+                                        <div className="flex items-center gap-1.5 p-1 bg-zinc-100 rounded-full border border-black/5">
+                                            {statuses.map((s) => (
+                                                <button
+                                                    key={s.value}
+                                                    onClick={() => onStatusChange(campaign.id, s.value)}
+                                                    className={cn(
+                                                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all",
+                                                        campaign.status === s.value
+                                                            ? s.color + " shadow-sm scale-105"
+                                                            : "text-zinc-400 hover:text-zinc-600"
+                                                    )}
+                                                >
+                                                    {s.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className={cn(
+                                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                                            campaign.status === 'waiting' ? 'bg-zinc-100 text-zinc-600 border-zinc-200' :
+                                                campaign.status === 'in_preparation' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                    campaign.status === 'live' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                        'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                        )}>
+                                            {campaign.status}
+                                        </span>
+                                    )}
                                 </div>
 
                                 {isEditing ? (

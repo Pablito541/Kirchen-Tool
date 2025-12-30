@@ -20,10 +20,26 @@ interface CampaignCardProps {
 }
 
 const statusConfig = {
-    waiting: { label: 'Wartet', color: 'bg-zinc-100 text-zinc-600 border-zinc-200 shadow-none' },
-    in_preparation: { label: 'In Vorbereitung', color: 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm shadow-amber-200/50' },
-    live: { label: 'Live / Läuft', color: 'bg-blue-50 text-blue-600 border-blue-100 shadow-sm shadow-blue-200/50' },
-    completed: { label: 'Fertiggestellt', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm shadow-emerald-200/50' },
+    waiting: {
+        label: 'Wartet',
+        color: 'bg-zinc-100 text-zinc-600 border-zinc-200 shadow-none',
+        cardBg: 'bg-white border-black/5 hover:border-zinc-300'
+    },
+    in_preparation: {
+        label: 'In Vorbereitung',
+        color: 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm shadow-amber-200/50',
+        cardBg: 'bg-amber-50/10 border-amber-200/50 hover:border-amber-300'
+    },
+    live: {
+        label: 'Live / Läuft',
+        color: 'bg-blue-50 text-blue-600 border-blue-100 shadow-sm shadow-blue-200/50',
+        cardBg: 'bg-blue-50/10 border-blue-200/50 hover:border-blue-300'
+    },
+    completed: {
+        label: 'Fertiggestellt',
+        color: 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm shadow-emerald-200/50',
+        cardBg: 'bg-emerald-50/10 border-emerald-200/50 hover:border-emerald-300'
+    },
 }
 
 export function CampaignCard({ campaign, isFocus, onClick }: CampaignCardProps) {
@@ -32,10 +48,10 @@ export function CampaignCard({ campaign, isFocus, onClick }: CampaignCardProps) 
             layout
             onClick={onClick}
             className={cn(
-                "group relative rounded-2xl border transition-all duration-300 active:scale-[0.99] cursor-pointer",
+                "group relative rounded-2xl border transition-all duration-300 active:scale-[0.99] cursor-pointer shadow-premium",
                 isFocus
-                    ? "bg-blue-50/50 border-blue-200 shadow-premium glow-blue hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 ring-1 ring-blue-500/5"
-                    : "bg-white border-black/5 shadow-premium hover:border-zinc-300"
+                    ? "bg-blue-50/50 border-blue-200 glow-blue hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 ring-1 ring-blue-500/5"
+                    : statusConfig[campaign.status].cardBg
             )}
         >
             <div className="p-5 flex items-center gap-5">

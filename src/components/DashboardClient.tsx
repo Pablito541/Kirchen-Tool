@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { CampaignCard, type CampaignStatus } from '@/components/CampaignCard'
+import { CampaignCard } from '@/components/CampaignCard'
 import { CreateCampaignModal } from '@/components/CreateCampaignModal'
 import { CampaignDetailModal } from '@/components/CampaignDetailModal'
 import { ProfileSettingsModal } from '@/components/ProfileSettingsModal'
@@ -9,23 +9,15 @@ import { AgencySettingsModal } from '@/components/AgencySettingsModal'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Settings, Sliders } from 'lucide-react'
+import { DndContext, closestCenter } from '@dnd-kit/core'
 import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent,
-} from '@dnd-kit/core'
-import {
-    arrayMove,
     SortableContext,
-    sortableKeyboardCoordinates,
     verticalListSortingStrategy,
     useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useCampaignDnd } from '@/hooks/useCampaignDnd'
+import { ROLES, CAMPAIGN_STATUS, type CampaignStatus } from '@/lib/constants'
 
 interface DashboardLayoutProps {
     campaigns: any[]
@@ -59,7 +51,10 @@ function SortableItem(props: any) {
 }
 
 export default function DashboardClient({ campaigns, profile, userId, brandingSettings }: DashboardLayoutProps) {
-    const [items, setItems] = useState(campaigns)
+    const role = profile.role
+    const { items, setItems, sensors, handleDragEnd } = useCampaignDnd(campaigns, role)
+
+    // Local UI state
     const [selectedCampaign, setSelectedCampaign] = useState<any>(null)
     const [isDetailOpen, setIsDetailOpen] = useState(false)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -67,53 +62,16 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
 
     const router = useRouter()
     const supabase = createClient()
-    const role = profile.role
 
     // Apply branding color
     const primaryColor = brandingSettings?.primary_color || '#3b82f6'
 
     useEffect(() => {
         setItems(campaigns.filter(c => !c.archived_at))
-    }, [campaigns])
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: { distance: 8 },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    )
+    }, [campaigns, setItems])
 
     const activeItems = useMemo(() => items.filter((_, idx) => idx < 6), [items])
     const futureItems = useMemo(() => items.filter((_, idx) => idx >= 6), [items])
-
-    async function handleDragEnd(event: DragEndEvent) {
-        if (role !== 'church') return
-
-        const { active, over } = event
-
-        if (over && active.id !== over.id) {
-            const oldIndex = items.findIndex((item) => item.id === active.id)
-            const newIndex = items.findIndex((item) => item.id === over.id)
-
-            const newItems = arrayMove(items, oldIndex, newIndex)
-            setItems(newItems)
-
-            const { error } = await supabase.from('campaigns').upsert(
-                newItems.map((item, index) => ({
-                    id: item.id,
-                    title: item.title,
-                    priority: index + 1,
-                }))
-            )
-
-            if (error) {
-                console.error('Error updating priorities:', error)
-                router.refresh()
-            }
-        }
-    }
 
     const handleStatusChange = async (id: string, status: CampaignStatus) => {
         const { error } = await supabase
@@ -161,12 +119,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
             >
                 {/* Active Missions Zone */}
                 <section className="bg-white border-b border-black/5 pb-20 pt-12 relative overflow-hidden">
-                    <div
-                        className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none opacity-20"
-                        style={{ backgroundColor: primaryColor }}
-                    />
-
-                    <div className="mx-auto max-w-5xl px-8 relative z-10">
+                    <div className="mx-auto max-w-5xl px-8">
                         <div className="flex items-end justify-between mb-12">
                             <div className="space-y-1">
                                 <h2 className="text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: primaryColor }}>
@@ -279,6 +232,8 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                 canEdit={role === 'church' || role === 'agency'}
                 onUpdate={handleUpdateCampaign}
                 onArchive={handleArchiveCampaign}
+                onStatusChange={handleStatusChange}
+                role={role}
             />
 
             <ProfileSettingsModal

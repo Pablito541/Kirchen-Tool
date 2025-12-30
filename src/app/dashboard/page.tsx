@@ -44,37 +44,30 @@ export default async function DashboardPage() {
         profile = newProfile
     }
 
-    const { data: campaigns } = await supabase
-        .from('campaigns')
-        .select('*')
-        .order('priority', { ascending: true })
-
-    // Fetch dashboard branding settings for churches
-    let brandingSettings = null
-    if (profile.role === 'church') {
-        const { data: s } = await supabase
-            .from('dashboard_settings')
+    // Parallel data fetching
+    const [campaignsResult, settingsResult] = await Promise.all([
+        supabase
+            .from('campaigns')
             .select('*')
-            .eq('church_id', user.id)
-            .single()
-        brandingSettings = s
-    }
+            .is('archived_at', null) // Server-side filtering
+            .order('priority', { ascending: true }),
+        profile.role === 'church'
+            ? supabase.from('dashboard_settings').select('*').eq('church_id', user.id).single()
+            : Promise.resolve({ data: null })
+    ])
+
+    const campaigns = campaignsResult.data
+    const brandingSettings = settingsResult.data
 
     return (
         <div className="flex min-h-screen flex-col bg-[#fafaf9]">
             <header className="flex h-20 items-center border-b border-black/5 px-8 sticky top-0 bg-white/80 backdrop-blur-xl z-30">
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-zinc-900 flex items-center justify-center shadow-lg shadow-black/10 transition-transform hover:scale-105 overflow-hidden">
-                        {profile?.logo_url ? (
-                            <img src={profile.logo_url} alt="Logo" className="h-full w-full object-contain p-1.5" />
-                        ) : (
-                            <div className="h-4 w-4 bg-white rounded-full ring-2 ring-white/20" />
-                        )}
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="font-black text-lg tracking-[-0.03em] leading-none mb-0.5">KIRCHE TOOL</span>
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] leading-none">Internal Platform</span>
-                    </div>
+                    <img
+                        src="/eip-media-logo.png"
+                        alt="EIP Media"
+                        className="h-20 object-contain"
+                    />
                 </div>
 
                 <div className="ml-auto flex items-center gap-8">
