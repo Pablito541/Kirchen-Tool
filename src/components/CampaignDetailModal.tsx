@@ -15,6 +15,7 @@ interface CampaignDetailModalProps {
     onUpdate: (updatedCampaign: any) => void
     onArchive: (id: string) => void
     onStatusChange: (id: string, status: any) => void
+    onPriorityChange: (id: string, priority: any) => void
     canEdit: boolean
     role: string
 }
@@ -26,11 +27,14 @@ export function CampaignDetailModal({
     onUpdate,
     onArchive,
     onStatusChange,
+    onPriorityChange,
     canEdit,
     role
 }: CampaignDetailModalProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [currentStatus, setCurrentStatus] = useState(campaign?.status || 'waiting')
+    const [currentPriority, setCurrentPriority] = useState(campaign?.priority_level || 'medium')
     const [formData, setFormData] = useState({
         title: campaign?.title || '',
         info_link: campaign?.info_link || '',
@@ -39,6 +43,8 @@ export function CampaignDetailModal({
 
     useEffect(() => {
         if (campaign) {
+            setCurrentStatus(campaign.status)
+            setCurrentPriority(campaign.priority_level || 'medium')
             setFormData({
                 title: campaign.title,
                 info_link: campaign.info_link,
@@ -76,14 +82,20 @@ export function CampaignDetailModal({
         { value: 'completed', label: 'Fertig', color: 'bg-emerald-100 text-emerald-700' },
     ]
 
+    const priorities = [
+        { value: 'low', label: 'Niedrig', color: 'bg-yellow-50 text-yellow-600 border-yellow-100' },
+        { value: 'medium', label: 'Mittel', color: 'bg-orange-50 text-orange-600 border-orange-100' },
+        { value: 'high', label: 'Hoch', color: 'bg-rose-50 text-rose-600 border-rose-100' },
+    ]
+
     return (
         <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
             <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 animate-in fade-in duration-300" />
-                <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl z-50 animate-in zoom-in-95 duration-300 overflow-hidden outline-none border border-white/20">
-                    <div className="relative p-8 md:p-12">
+                <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] md:w-full max-w-2xl bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl z-50 animate-in zoom-in-95 duration-300 overflow-hidden outline-none border border-white/20 max-h-[90vh] overflow-y-auto">
+                    <div className="relative p-6 md:p-12">
                         <Dialog.Close asChild>
-                            <button className="absolute right-8 top-8 p-3 hover:bg-zinc-100 rounded-2xl transition-all active:scale-95 group">
+                            <button className="absolute right-4 top-4 md:right-8 md:top-8 p-3 hover:bg-zinc-100 rounded-2xl transition-all active:scale-95 group z-10">
                                 <X className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
                             </button>
                         </Dialog.Close>
@@ -91,49 +103,88 @@ export function CampaignDetailModal({
                         <div className="space-y-10">
                             {/* Header Section */}
                             <div className="space-y-4">
-                                <div className="flex items-center gap-4">
-                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] bg-blue-50 px-3 py-1 rounded-full">
-                                        Kampagne #{campaign.priority}
-                                    </span>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                    <div className="flex items-center gap-4 shrink-0">
+                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] bg-blue-50 px-3 py-1 rounded-full">
+                                            #{campaign.priority}
+                                        </span>
 
-                                    {role === 'agency' ? (
-                                        <div className="flex items-center gap-1.5 p-1 bg-zinc-100 rounded-full border border-black/5">
-                                            {statuses.map((s) => (
+                                        {/* Status only for top 6 */}
+                                        {campaign.priority <= 6 && (
+                                            role === 'agency' ? null : (
+                                                <span className={cn(
+                                                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                                                    campaign.status === 'waiting' ? 'bg-zinc-100 text-zinc-600 border-zinc-200' :
+                                                        campaign.status === 'in_preparation' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                            campaign.status === 'live' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                                'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                )}>
+                                                    {campaign.status}
+                                                </span>
+                                            )
+                                        )}
+                                    </div>
+
+                                    {/* Selectors for Agency/Both */}
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        {campaign.priority <= 6 && role === 'agency' && (
+                                            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-zinc-100 rounded-2xl border border-black/5">
+                                                {statuses.map((s) => (
+                                                    <button
+                                                        key={s.value}
+                                                        onClick={() => {
+                                                            setCurrentStatus(s.value)
+                                                            onStatusChange(campaign.id, s.value)
+                                                        }}
+                                                        className={cn(
+                                                            "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all",
+                                                            currentStatus === s.value
+                                                                ? s.color + " shadow-sm scale-105"
+                                                                : "text-zinc-500 hover:text-zinc-700"
+                                                        )}
+                                                    >
+                                                        {s.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-zinc-100 rounded-2xl border border-black/5">
+                                            <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest px-2">Prio:</span>
+                                            {priorities.map((p) => (
                                                 <button
-                                                    key={s.value}
-                                                    onClick={() => onStatusChange(campaign.id, s.value)}
+                                                    key={p.value}
+                                                    onClick={() => {
+                                                        setCurrentPriority(p.value)
+                                                        onPriorityChange(campaign.id, p.value)
+                                                    }}
                                                     className={cn(
-                                                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all",
-                                                        campaign.status === s.value
-                                                            ? s.color + " shadow-sm scale-105"
-                                                            : "text-zinc-400 hover:text-zinc-600"
+                                                        "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all",
+                                                        currentPriority === p.value
+                                                            ? p.color + " shadow-sm scale-105"
+                                                            : "text-zinc-500 hover:text-zinc-700 hover:bg-white/50"
                                                     )}
                                                 >
-                                                    {s.label}
+                                                    {p.label}
                                                 </button>
                                             ))}
                                         </div>
-                                    ) : (
-                                        <span className={cn(
-                                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
-                                            campaign.status === 'waiting' ? 'bg-zinc-100 text-zinc-600 border-zinc-200' :
-                                                campaign.status === 'in_preparation' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                    campaign.status === 'live' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                        'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                        )}>
-                                            {campaign.status}
-                                        </span>
-                                    )}
+                                    </div>
                                 </div>
 
                                 {isEditing ? (
-                                    <Input
-                                        value={formData.title}
-                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                        className="text-4xl font-black tracking-tight border-none p-0 focus:ring-0 h-auto bg-transparent border-b border-zinc-200"
-                                    />
+                                    <>
+                                        <Dialog.Title className="sr-only">Kampagne bearbeiten: {campaign.title}</Dialog.Title>
+                                        <Input
+                                            value={formData.title}
+                                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                            className="text-2xl md:text-4xl font-black tracking-tight border-none p-0 focus:ring-0 h-auto bg-transparent border-b border-zinc-200"
+                                        />
+                                    </>
                                 ) : (
-                                    <h2 className="text-4xl font-black tracking-tight text-zinc-900">{campaign.title}</h2>
+                                    <Dialog.Title className="text-2xl md:text-4xl font-black tracking-tight text-zinc-900 leading-tight">
+                                        {campaign.title}
+                                    </Dialog.Title>
                                 )}
                             </div>
 
@@ -188,28 +239,28 @@ export function CampaignDetailModal({
 
                             {/* Actions Footer */}
                             {canEdit && (
-                                <div className="pt-10 flex items-center justify-between border-t border-black/[0.03]">
+                                <div className="pt-8 md:pt-10 flex flex-col md:flex-row gap-8 md:items-center justify-between border-t border-black/[0.03]">
                                     <button
                                         onClick={() => onArchive(campaign.id)}
-                                        className="flex items-center gap-2 text-xs font-black text-zinc-400 hover:text-red-500 transition-all uppercase tracking-widest group"
+                                        className="flex items-center gap-2 text-xs font-black text-zinc-400 hover:text-red-500 transition-all uppercase tracking-widest group order-2 md:order-1"
                                     >
                                         <Trash2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
                                         Kampagne Archivieren
                                     </button>
 
-                                    <div className="flex gap-4">
+                                    <div className="flex flex-col sm:flex-row gap-3 md:gap-4 order-1 md:order-2">
                                         {isEditing ? (
                                             <>
                                                 <Button
                                                     onClick={() => setIsEditing(false)}
-                                                    className="bg-zinc-100 text-zinc-600 hover:bg-zinc-200 rounded-xl font-bold px-6"
+                                                    className="bg-zinc-100 text-zinc-600 hover:bg-zinc-200 rounded-xl md:rounded-2xl font-bold px-6 h-12 md:h-11"
                                                     disabled={loading}
                                                 >
                                                     Abbrechen
                                                 </Button>
                                                 <Button
                                                     onClick={handleSave}
-                                                    className="bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl font-bold px-6 flex items-center gap-2"
+                                                    className="bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl md:rounded-2xl font-bold px-6 h-12 md:h-11 flex items-center justify-center gap-2 shadow-lg shadow-black/10"
                                                     disabled={loading}
                                                 >
                                                     <Save className="h-4 w-4" />
@@ -219,7 +270,7 @@ export function CampaignDetailModal({
                                         ) : (
                                             <Button
                                                 onClick={() => setIsEditing(true)}
-                                                className="bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl font-bold px-8 shadow-lg shadow-black/10 transition-all active:scale-95"
+                                                className="bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl md:rounded-2xl font-bold px-8 h-12 md:h-11 shadow-lg shadow-black/10 transition-all active:scale-95"
                                             >
                                                 Bearbeiten
                                             </Button>

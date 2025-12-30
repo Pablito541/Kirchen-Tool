@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardClient from '@/components/DashboardClient'
+import { UserMenu } from '@/components/UserMenu'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -22,6 +23,8 @@ export default async function DashboardPage() {
         .select('*')
         .eq('id', user.id)
         .single()
+
+    console.log('Dashboard: Profile lookup result:', profile ? `Found (${profile.role})` : 'Not found')
 
     if (!profile) {
         // Auto-create profile for password login if it doesn't exist
@@ -61,38 +64,6 @@ export default async function DashboardPage() {
 
     return (
         <div className="flex min-h-screen flex-col bg-[#fafaf9]">
-            <header className="flex h-20 items-center border-b border-black/5 px-8 sticky top-0 bg-white/80 backdrop-blur-xl z-30">
-                <div className="flex items-center gap-3">
-                    <img
-                        src="/eip-media-logo.png"
-                        alt="EIP Media"
-                        className="h-20 object-contain"
-                    />
-                </div>
-
-                <div className="ml-auto flex items-center gap-8">
-                    <div className="hidden md:flex flex-col items-end">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block leading-none mb-1.5">Angemeldet als</span>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-zinc-900 leading-none">
-                                {profile.full_name || 'Nutzer'}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${profile.role === 'church'
-                                ? 'bg-blue-50 text-blue-600 border-blue-100'
-                                : 'bg-zinc-100 text-zinc-600 border-zinc-200'
-                                }`}>
-                                {profile.role === 'church' ? 'Kirche' : 'Agentur'}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="h-8 w-[1px] bg-zinc-100 mx-2 hidden md:block" />
-                    <form action="/auth/signout" method="post">
-                        <button className="text-xs font-black text-zinc-400 hover:text-zinc-900 transition-all uppercase tracking-[0.2em] hover:tracking-[0.25em]">
-                            Abmelden
-                        </button>
-                    </form>
-                </div>
-            </header>
             <main className="flex-1">
                 <DashboardClient
                     campaigns={campaigns || []}
@@ -103,5 +74,4 @@ export default async function DashboardPage() {
             </main>
         </div>
     )
-
 }

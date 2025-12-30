@@ -10,6 +10,12 @@ export const CAMPAIGN_STATUS = {
     COMPLETED: 'completed',
 } as const
 
+export const PRIORITY_LEVEL = {
+    LOW: 'low',
+    MEDIUM: 'medium',
+    HIGH: 'high',
+} as const
+
 export const DASHBOARD_SECTIONS = {
     ACTIVE: 'Aktive Missionen',
     FUTURE: 'Zukünftige Projekte',
@@ -17,3 +23,4 @@ export const DASHBOARD_SECTIONS = {
 
 export type Role = typeof ROLES[keyof typeof ROLES]
 export type CampaignStatus = typeof CAMPAIGN_STATUS[keyof typeof CAMPAIGN_STATUS]
+export type PriorityLevel = typeof PRIORITY_LEVEL[keyof typeof PRIORITY_LEVEL]

@@ -6,6 +6,7 @@ import { CreateCampaignModal } from '@/components/CreateCampaignModal'
 import { CampaignDetailModal } from '@/components/CampaignDetailModal'
 import { ProfileSettingsModal } from '@/components/ProfileSettingsModal'
 import { AgencySettingsModal } from '@/components/AgencySettingsModal'
+import { UserMenu } from '@/components/UserMenu'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Settings, Sliders } from 'lucide-react'
@@ -87,6 +88,17 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
         }
     }
 
+    const handlePriorityChange = async (id: string, priority_level: string) => {
+        const { error } = await supabase
+            .from('campaigns')
+            .update({ priority_level })
+            .eq('id', id)
+
+        if (!error) {
+            setItems(prev => prev.map(item => item.id === id ? { ...item, priority_level } : item))
+        }
+    }
+
     const handleUpdateCampaign = (updated: any) => {
         setItems(prev => prev.map(item => item.id === updated.id ? updated : item))
         setSelectedCampaign(updated)
@@ -112,47 +124,46 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
 
     return (
         <div className="flex-1">
+            <header className="flex h-16 md:h-20 items-center border-b border-black/5 px-4 md:px-8 sticky top-0 bg-white/80 backdrop-blur-xl z-30">
+                <div className="flex items-center gap-2 md:gap-3">
+                    <img
+                        src="/eip-media-logo.png"
+                        alt="EIP Media"
+                        className="h-12 md:h-20 object-contain"
+                    />
+                </div>
+
+                <div className="ml-auto flex items-center gap-4">
+                    <UserMenu
+                        profile={profile}
+                        onOpenSettings={() => setIsSettingsOpen(true)}
+                        onOpenAgencySettings={() => setIsAgencySettingsOpen(true)}
+                    />
+                </div>
+            </header>
+
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
             >
                 {/* Active Missions Zone */}
-                <section className="bg-white border-b border-black/5 pb-20 pt-12 relative overflow-hidden">
-                    <div className="mx-auto max-w-5xl px-8">
-                        <div className="flex items-end justify-between mb-12">
+                <section className="bg-white border-b border-black/5 pb-12 md:pb-20 pt-8 md:pt-12 relative overflow-hidden">
+                    <div className="mx-auto max-w-5xl px-4 md:px-8">
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 md:mb-12">
                             <div className="space-y-1">
-                                <h2 className="text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: primaryColor }}>
-                                    {brandingSettings?.welcome_message ? 'Status: Aktiv' : 'Status: Aktiv'}
+                                <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: primaryColor }}>
+                                    {brandingSettings?.welcome_message ? 'Fokus' : 'Fokus'}
                                 </h2>
-                                <p className="text-4xl font-black text-zinc-900 tracking-tight">
-                                    {role === 'church' && brandingSettings?.welcome_message ? brandingSettings.welcome_message : 'Aktive Missionen'}
+                                <p className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight leading-tight">
+                                    {role === 'church' && brandingSettings?.welcome_message ? brandingSettings.welcome_message : 'Aktive Kampagnen'}
                                 </p>
                             </div>
-                            <div className="flex items-center gap-4">
-                                {role === 'agency' && (
-                                    <button
-                                        onClick={() => setIsAgencySettingsOpen(true)}
-                                        className="flex items-center gap-2 bg-zinc-900 text-white px-6 py-3 rounded-2xl text-sm font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-black/10 active:scale-95 group"
-                                    >
-                                        <Sliders className="h-4 w-4 group-hover:rotate-180 transition-transform duration-700" />
-                                        Kirchen-Ansicht
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => setIsSettingsOpen(true)}
-                                    className="p-3 hover:bg-zinc-100 rounded-2xl transition-all active:scale-95 group text-zinc-400 hover:text-zinc-900 border border-black/5"
-                                >
-                                    <Settings className="h-5 w-5 group-hover:rotate-90 transition-transform duration-500" />
-                                </button>
-                                {role === 'church' && (
-                                    <CreateCampaignModal
-                                        userId={userId}
-                                        nextPriority={items.length + 1}
-                                        onCreated={(nc) => setItems(prev => [...prev, nc])}
-                                    />
-                                )}
-                            </div>
+                            <CreateCampaignModal
+                                userId={userId}
+                                nextPriority={items.length + 1}
+                                onCreated={(nc) => setItems(prev => [...prev, nc])}
+                            />
                         </div>
 
                         <div className="flex flex-col gap-4">
@@ -162,7 +173,10 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                         <CampaignCard
                                             campaign={campaign}
                                             isFocus
+                                            role={role}
                                             onClick={() => openDetail(campaign)}
+                                            onStatusChange={handleStatusChange}
+                                            onPriorityChange={handlePriorityChange}
                                         />
                                     </SortableItem>
                                 ))}
@@ -179,15 +193,15 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
 
                 {/* Future Projects Zone */}
                 {(!brandingSettings || brandingSettings.show_future_projects || role === 'agency') && (
-                    <section className="py-20 min-h-[500px] relative">
-                        <div className="mx-auto max-w-5xl px-8">
-                            <div className="mb-12 flex items-center justify-between">
+                    <section className="py-12 md:py-20 min-h-[500px] relative">
+                        <div className="mx-auto max-w-5xl px-4 md:px-8">
+                            <div className="mb-8 md:mb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
-                                    <h2 className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Ausblick</h2>
-                                    <p className="text-3xl font-black text-zinc-900 tracking-tight">Zükünftige Projekte</p>
+                                    <h2 className="text-[10px] md:text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Ausblick</h2>
+                                    <p className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight">Zukünftige Kampagnen</p>
                                 </div>
                                 {brandingSettings && !brandingSettings.show_future_projects && role === 'agency' && (
-                                    <div className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100 italic">
+                                    <div className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100 italic w-fit">
                                         Nur für Agentur sichtbar
                                     </div>
                                 )}
@@ -199,7 +213,10 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                         <SortableItem key={campaign.id} id={campaign.id} disabled={role !== 'church'}>
                                             <CampaignCard
                                                 campaign={campaign}
+                                                role={role}
                                                 onClick={() => openDetail(campaign)}
+                                                onStatusChange={handleStatusChange}
+                                                onPriorityChange={handlePriorityChange}
                                             />
                                         </SortableItem>
                                     ))}
@@ -233,6 +250,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                 onUpdate={handleUpdateCampaign}
                 onArchive={handleArchiveCampaign}
                 onStatusChange={handleStatusChange}
+                onPriorityChange={handlePriorityChange}
                 role={role}
             />
 

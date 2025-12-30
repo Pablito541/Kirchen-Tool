@@ -56,9 +56,9 @@ export default function LoginPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.5 }}
-                        className="flex flex-col items-center gap-6"
+                        className="flex flex-col items-center gap-4 md:gap-6"
                     >
-                        <div className={`rounded-[2rem] p-6 shadow-premium border transition-all duration-700 ${role === 'church'
+                        <div className={`rounded-[2rem] p-4 md:p-6 shadow-premium border transition-all duration-700 ${role === 'church'
                             ? 'bg-white border-white/50 ring-1 ring-black/5'
                             : 'bg-zinc-900 border-zinc-800 ring-1 ring-white/5'
                             }`}>
@@ -76,18 +76,18 @@ export default function LoginPage() {
                             <p className={`text-base font-medium transition-colors duration-700 ${role === 'church' ? 'text-zinc-500' : 'text-zinc-400'
                                 }`}>
                                 {role === 'church'
-                                    ? 'Verwalte deine Kampagnen und Prioritäten.'
+                                    ? 'Verwalte eure Kampagnen und Prioritäten.'
                                     : 'Projektübersicht und Statusberichte.'}
                             </p>
                         </div>
                     </motion.div>
                 </AnimatePresence>
 
-                <div className={`p-10 rounded-[2.5rem] shadow-premium transition-all duration-700 border glass ${role === 'church'
+                <div className={`p-8 md:p-10 rounded-[2.5rem] shadow-premium transition-all duration-700 border glass ${role === 'church'
                     ? 'border-white/40 ring-1 ring-black/5'
                     : 'border-white/5 ring-1 ring-white/5 shadow-2xl shadow-black/40'
                     }`}>
-                    <form action={handleAction} className="space-y-6 text-left">
+                    <form action={handleAction} className="space-y-4 md:space-y-6 text-left">
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className={`text-[11px] font-bold uppercase tracking-[0.2em] ml-2 ${role === 'church' ? 'text-zinc-400' : 'text-zinc-500'
