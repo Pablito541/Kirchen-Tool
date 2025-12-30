@@ -28,7 +28,6 @@ export function useCampaignDnd(initialItems: any[], role: string) {
     )
 
     async function handleDragEnd(event: DragEndEvent) {
-        if (role !== 'church') return
 
         const { active, over } = event
 

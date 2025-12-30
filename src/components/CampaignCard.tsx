@@ -18,8 +18,10 @@ interface CampaignCardProps {
         status: CampaignStatus
         priority_level: PriorityLevel
         priority: number
+        goals_reached?: boolean
     }
     isFocus?: boolean
+    isArchive?: boolean
     role?: string
     onClick?: () => void
     onStatusChange?: (id: string, status: CampaignStatus) => void
@@ -67,7 +69,7 @@ const priorityConfig = {
     }
 }
 
-export function CampaignCard({ campaign, isFocus, role, onClick, onStatusChange, onPriorityChange }: CampaignCardProps) {
+export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onStatusChange, onPriorityChange }: CampaignCardProps) {
     const [isOpen, setIsOpen] = useState<'status' | 'priority' | null>(null)
     const buttonRef = useRef<HTMLButtonElement>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -146,9 +148,11 @@ export function CampaignCard({ campaign, isFocus, role, onClick, onStatusChange,
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-5">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 px-1.5 py-0.5 rounded">
-                            #{campaign.priority}
-                        </span>
+                        {!isArchive && (
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 px-1.5 py-0.5 rounded">
+                                #{campaign.priority}
+                            </span>
+                        )}
                         <h3 className="text-base font-black text-zinc-900 tracking-tight leading-tight md:leading-none truncate">
                             {campaign.title}
                         </h3>
@@ -157,7 +161,7 @@ export function CampaignCard({ campaign, isFocus, role, onClick, onStatusChange,
                         <p className="hidden md:block text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
                             Kampagnen-Details
                         </p>
-                        {!isFocus && campaign.priority_level && (
+                        {!isFocus && !isArchive && campaign.priority_level && (
                             <span className={cn(
                                 "flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md",
                                 priorityConfig[campaign.priority_level].color
@@ -170,7 +174,17 @@ export function CampaignCard({ campaign, isFocus, role, onClick, onStatusChange,
                 </div>
 
                 <div className="flex items-center gap-3 md:gap-3">
-                    {isFocus ? (
+                    {isArchive ? (
+                        <div className={cn(
+                            "flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm",
+                            campaign.goals_reached
+                                ? "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-200/50"
+                                : "bg-amber-50 text-amber-600 border-amber-100 shadow-amber-200/50"
+                        )}>
+                            <div className={cn("w-1.5 h-1.5 rounded-full", campaign.goals_reached ? "bg-emerald-500" : "bg-amber-500")} />
+                            {campaign.goals_reached ? 'Ziele erreicht' : 'Ziele verfehlt'}
+                        </div>
+                    ) : isFocus ? (
                         <button
                             onClick={(e) => handleOpen(e, 'status')}
                             className={cn(
@@ -237,28 +251,30 @@ export function CampaignCard({ campaign, isFocus, role, onClick, onStatusChange,
                         </div>
                         <div className="space-y-1 mt-1">
                             {isOpen === 'status' ? (
-                                (Object.entries(statusConfig) as [CampaignStatus, typeof statusConfig['waiting']][]).map(([val, config]) => {
-                                    const isActive = campaign.status === val
-                                    return (
-                                        <button
-                                            key={val}
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                            onClick={(e) => handleStatusClick(e, val)}
-                                            className={cn(
-                                                "w-full text-left px-4 py-3 rounded-[18px] text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-between group/item",
-                                                isActive
-                                                    ? "bg-zinc-900 text-white shadow-xl shadow-black/10"
-                                                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-                                            )}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-white" : config.color.split(' ')[0])} />
-                                                {config.label}
-                                            </div>
-                                            {isActive && <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />}
-                                        </button>
-                                    )
-                                })
+                                (Object.entries(statusConfig) as [CampaignStatus, typeof statusConfig['waiting']][])
+                                    .filter(([val]) => val !== 'completed')
+                                    .map(([val, config]) => {
+                                        const isActive = campaign.status === val
+                                        return (
+                                            <button
+                                                key={val}
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onClick={(e) => handleStatusClick(e, val)}
+                                                className={cn(
+                                                    "w-full text-left px-4 py-3 rounded-[18px] text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-between group/item",
+                                                    isActive
+                                                        ? "bg-zinc-900 text-white shadow-xl shadow-black/10"
+                                                        : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-white" : config.color.split(' ')[0])} />
+                                                    {config.label}
+                                                </div>
+                                                {isActive && <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />}
+                                            </button>
+                                        )
+                                    })
                             ) : (
                                 (Object.entries(priorityConfig) as [PriorityLevel, typeof priorityConfig['high']][]).map(([val, config]) => {
                                     const isActive = campaign.priority_level === val

@@ -1,5 +1,7 @@
 'use client'
 
+import { CampaignCompletionModal } from '@/components/CampaignCompletionModal'
+
 import { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X, ExternalLink, Link as LinkIcon, Save, Trash2 } from 'lucide-react'
@@ -33,6 +35,7 @@ export function CampaignDetailModal({
 }: CampaignDetailModalProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [isCompletionOpen, setIsCompletionOpen] = useState(false)
     const [currentStatus, setCurrentStatus] = useState(campaign?.status || 'waiting')
     const [currentPriority, setCurrentPriority] = useState(campaign?.priority_level || 'medium')
     const [formData, setFormData] = useState({
@@ -103,74 +106,76 @@ export function CampaignDetailModal({
                         <div className="space-y-10">
                             {/* Header Section */}
                             <div className="space-y-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                    <div className="flex items-center gap-4 shrink-0">
-                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] bg-blue-50 px-3 py-1 rounded-full">
-                                            #{campaign.priority}
-                                        </span>
+                                {campaign.status !== 'completed' && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                                        <div className="flex items-center gap-4 shrink-0">
+                                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] bg-blue-50 px-3 py-1 rounded-full">
+                                                #{campaign.priority}
+                                            </span>
 
-                                        {/* Status only for top 6 */}
-                                        {campaign.priority <= 6 && (
-                                            role === 'agency' ? null : (
-                                                <span className={cn(
-                                                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
-                                                    campaign.status === 'waiting' ? 'bg-zinc-100 text-zinc-600 border-zinc-200' :
-                                                        campaign.status === 'in_preparation' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                            campaign.status === 'live' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                                'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                )}>
-                                                    {campaign.status}
-                                                </span>
-                                            )
-                                        )}
-                                    </div>
+                                            {/* Status only for top 6 */}
+                                            {campaign.priority <= 6 && (
+                                                role === 'agency' ? null : (
+                                                    <span className={cn(
+                                                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                                                        campaign.status === 'waiting' ? 'bg-zinc-100 text-zinc-600 border-zinc-200' :
+                                                            campaign.status === 'in_preparation' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                                campaign.status === 'live' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                                    'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                    )}>
+                                                        {campaign.status}
+                                                    </span>
+                                                )
+                                            )}
+                                        </div>
 
-                                    {/* Selectors for Agency/Both */}
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        {campaign.priority <= 6 && role === 'agency' && (
+                                        {/* Selectors for Agency/Both */}
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            {campaign.priority <= 6 && role === 'agency' && (
+                                                <div className="flex flex-wrap items-center gap-1.5 p-1 bg-zinc-100 rounded-2xl border border-black/5">
+                                                    {statuses.filter(s => s.value !== 'completed').map((s) => (
+                                                        <button
+                                                            key={s.value}
+                                                            onClick={() => {
+                                                                setCurrentStatus(s.value)
+                                                                onStatusChange(campaign.id, s.value)
+                                                            }}
+                                                            className={cn(
+                                                                "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all",
+                                                                currentStatus === s.value
+                                                                    ? s.color + " shadow-sm scale-105"
+                                                                    : "text-zinc-500 hover:text-zinc-700"
+                                                            )}
+                                                        >
+                                                            {s.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <div className="flex flex-wrap items-center gap-1.5 p-1 bg-zinc-100 rounded-2xl border border-black/5">
-                                                {statuses.map((s) => (
+                                                <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest px-2">Prio:</span>
+                                                {priorities.map((p) => (
                                                     <button
-                                                        key={s.value}
+                                                        key={p.value}
                                                         onClick={() => {
-                                                            setCurrentStatus(s.value)
-                                                            onStatusChange(campaign.id, s.value)
+                                                            setCurrentPriority(p.value)
+                                                            onPriorityChange(campaign.id, p.value)
                                                         }}
                                                         className={cn(
                                                             "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all",
-                                                            currentStatus === s.value
-                                                                ? s.color + " shadow-sm scale-105"
-                                                                : "text-zinc-500 hover:text-zinc-700"
+                                                            currentPriority === p.value
+                                                                ? p.color + " shadow-sm scale-105"
+                                                                : "text-zinc-500 hover:text-zinc-700 hover:bg-white/50"
                                                         )}
                                                     >
-                                                        {s.label}
+                                                        {p.label}
                                                     </button>
                                                 ))}
                                             </div>
-                                        )}
-
-                                        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-zinc-100 rounded-2xl border border-black/5">
-                                            <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest px-2">Prio:</span>
-                                            {priorities.map((p) => (
-                                                <button
-                                                    key={p.value}
-                                                    onClick={() => {
-                                                        setCurrentPriority(p.value)
-                                                        onPriorityChange(campaign.id, p.value)
-                                                    }}
-                                                    className={cn(
-                                                        "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all",
-                                                        currentPriority === p.value
-                                                            ? p.color + " shadow-sm scale-105"
-                                                            : "text-zinc-500 hover:text-zinc-700 hover:bg-white/50"
-                                                    )}
-                                                >
-                                                    {p.label}
-                                                </button>
-                                            ))}
                                         </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {isEditing ? (
                                     <>
@@ -237,6 +242,52 @@ export function CampaignDetailModal({
                                 </div>
                             </div>
 
+                            {/* Completion Report Section (only shown if completed) */}
+                            {campaign.status === 'completed' && campaign.performance_summary && (
+                                <div className="pt-10 mt-10 border-t border-emerald-100 bg-emerald-50/30 -mx-6 md:-mx-12 px-6 md:px-12 py-10 rounded-b-[2.5rem]">
+                                    <h3 className="text-sm font-black text-emerald-600 uppercase tracking-[0.2em] mb-8">Abschlussbericht & Analysen</h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <p className="text-[10px] font-black text-emerald-600/50 uppercase tracking-widest">Performance Fazit</p>
+                                                <p className="text-sm text-zinc-700 font-medium leading-relaxed whitespace-pre-wrap">
+                                                    {campaign.performance_summary}
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <p className="text-[10px] font-black text-emerald-600/50 uppercase tracking-widest">Learnings für die Zukunft</p>
+                                                <p className="text-sm text-zinc-700 font-medium leading-relaxed whitespace-pre-wrap italic">
+                                                    {campaign.lessons_learned || 'Keine spezifischen Learnings vermerkt.'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <div className="space-y-3">
+                                                <p className="text-[10px] font-black text-emerald-600/50 uppercase tracking-widest">Zielerreichung</p>
+                                                <div className={cn(
+                                                    "inline-flex items-center gap-2 px-4 py-2 rounded-2xl font-black text-sm uppercase tracking-wider border",
+                                                    campaign.goals_reached
+                                                        ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                                        : "bg-amber-100 text-amber-700 border-amber-200"
+                                                )}>
+                                                    <div className={cn("w-2 h-2 rounded-full", campaign.goals_reached ? "bg-emerald-500" : "bg-amber-500")} />
+                                                    {campaign.goals_reached ? 'Ziele erreicht' : 'Ziele nicht erreicht'}
+                                                </div>
+                                                {campaign.goals_reached_reason && (
+                                                    <p className="text-sm text-zinc-600 font-medium bg-white/50 p-4 rounded-2xl border border-emerald-100/50">
+                                                        <span className="text-[10px] font-black text-zinc-400 block mb-1 uppercase">Begründung/Faktor:</span>
+                                                        {campaign.goals_reached_reason}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Actions Footer */}
                             {canEdit && (
                                 <div className="pt-8 md:pt-10 flex flex-col md:flex-row gap-8 md:items-center justify-between border-t border-black/[0.03]">
@@ -249,6 +300,16 @@ export function CampaignDetailModal({
                                     </button>
 
                                     <div className="flex flex-col sm:flex-row gap-3 md:gap-4 order-1 md:order-2">
+                                        {/* Completion Button for valid statuses */}
+                                        {!isEditing && role === 'agency' && ['live', 'in_preparation', 'waiting'].includes(campaign.status) && (
+                                            <Button
+                                                onClick={() => setIsCompletionOpen(true)}
+                                                className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl md:rounded-2xl font-bold px-6 h-12 md:h-11 shadow-sm active:scale-95 transition-all"
+                                            >
+                                                Kampagne abschließen
+                                            </Button>
+                                        )}
+
                                         {isEditing ? (
                                             <>
                                                 <Button
@@ -282,6 +343,16 @@ export function CampaignDetailModal({
                     </div>
                 </Dialog.Content>
             </Dialog.Portal>
+
+            <CampaignCompletionModal
+                isOpen={isCompletionOpen}
+                onOpenChange={setIsCompletionOpen}
+                campaign={campaign}
+                onComplete={() => {
+                    onStatusChange(campaign.id, 'completed')
+                    onOpenChange(false) // Close detail modal too
+                }}
+            />
         </Dialog.Root>
     )
 }

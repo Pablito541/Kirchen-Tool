@@ -9,7 +9,7 @@ import { AgencySettingsModal } from '@/components/AgencySettingsModal'
 import { UserMenu } from '@/components/UserMenu'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Settings, Sliders } from 'lucide-react'
+import { Settings, Sliders, History } from 'lucide-react'
 import { DndContext, closestCenter } from '@dnd-kit/core'
 import {
     SortableContext,
@@ -35,7 +35,10 @@ function SortableItem(props: any) {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: props.id })
+    } = useSortable({
+        id: props.id,
+        disabled: props.disabled
+    })
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -72,7 +75,25 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
     }, [campaigns, setItems])
 
     const activeItems = useMemo(() => items.filter((_, idx) => idx < 6), [items])
-    const futureItems = useMemo(() => items.filter((_, idx) => idx >= 6), [items])
+    const futureItems = useMemo(() => {
+        const priorityWeights: Record<string, number> = {
+            high: 0,
+            medium: 1,
+            low: 2
+        }
+
+        return items.filter((_, idx) => idx >= 6).sort((a, b) => {
+            const weightA = priorityWeights[a.priority_level || 'medium']
+            const weightB = priorityWeights[b.priority_level || 'medium']
+
+            if (weightA !== weightB) {
+                return weightA - weightB
+            }
+
+            // Same priority: oldest first (FIFO)
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        })
+    }, [items])
 
     const handleStatusChange = async (id: string, status: CampaignStatus) => {
         const { error } = await supabase
@@ -169,7 +190,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                         <div className="flex flex-col gap-4">
                             <SortableContext items={activeItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
                                 {activeItems.map((campaign) => (
-                                    <SortableItem key={campaign.id} id={campaign.id} disabled={role !== 'church'}>
+                                    <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
                                         <CampaignCard
                                             campaign={campaign}
                                             isFocus
@@ -210,7 +231,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                             <div className="space-y-4">
                                 <SortableContext items={futureItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
                                     {futureItems.map((campaign) => (
-                                        <SortableItem key={campaign.id} id={campaign.id} disabled={role !== 'church'}>
+                                        <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
                                             <CampaignCard
                                                 campaign={campaign}
                                                 role={role}
@@ -228,13 +249,20 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                 )}
                             </div>
 
-                            <div className="mt-24 pt-12 border-t border-black/5 text-center">
+                            <div className="mt-24 pt-12 border-t border-black/5 text-center px-4 md:px-0">
                                 <a
                                     href="/archive"
-                                    className="group inline-flex items-center gap-3 text-[11px] font-black text-zinc-400 hover:text-zinc-900 transition-all uppercase tracking-[0.3em] hover:tracking-[0.35em]"
+                                    className="group relative inline-flex items-center gap-6 px-10 py-6 bg-white border border-black/5 rounded-[2.5rem] shadow-premium hover:shadow-2xl hover:border-zinc-200 transition-all duration-500"
                                 >
-                                    Zum Archiv der Erfolge
-                                    <div className="w-8 h-[1px] bg-zinc-200 group-hover:bg-zinc-900 transition-colors" />
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-zinc-900 group-hover:rotate-[-12deg] transition-all duration-500">
+                                            <History className="h-5 w-5 text-zinc-400 group-hover:text-white" />
+                                        </div>
+                                        <div className="flex flex-col items-start gap-0.5">
+                                            <span className="text-sm font-black text-zinc-900 uppercase tracking-[0.2em] group-hover:text-zinc-600 transition-colors">Vorherige Projekte</span>
+                                        </div>
+                                    </div>
+                                    <div className="w-8 h-[1px] bg-zinc-200 group-hover:bg-zinc-900 group-hover:w-12 transition-all duration-500" />
                                 </a>
                             </div>
                         </div>
