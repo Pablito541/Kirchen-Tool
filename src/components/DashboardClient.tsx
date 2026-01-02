@@ -174,10 +174,10 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 md:mb-12">
                             <div className="space-y-1">
                                 <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: primaryColor }}>
-                                    {brandingSettings?.welcome_message ? 'Fokus' : 'Fokus'}
+                                    {role === 'church' && brandingSettings?.welcome_message ? brandingSettings.welcome_message : `Willkommen, ${profile.full_name || 'Nutzer'}!`}
                                 </h2>
                                 <p className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight leading-tight">
-                                    {role === 'church' && brandingSettings?.welcome_message ? brandingSettings.welcome_message : 'Aktive Kampagnen'}
+                                    Aktive Kampagnen
                                 </p>
                             </div>
                             <CreateCampaignModal

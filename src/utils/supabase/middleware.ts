@@ -37,7 +37,7 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Protected routes logic
-    if (!user && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/archive'))) {
+    if (!user && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/archive') || request.nextUrl.pathname.startsWith('/setup'))) {
         console.log('Middleware: Redirecting to login from protected route')
         const url = request.nextUrl.clone()
         url.pathname = '/login'

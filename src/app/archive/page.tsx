@@ -30,6 +30,12 @@ export default function ArchivePage() {
                 .eq('id', user.id)
                 .single()
             if (!profile) return router.push('/login')
+
+            // Extra check for archive: if role is agency but email is not @eip-media, redirect to dashboard for role fix
+            if (profile.role === 'agency' && !user.email?.includes('@eip-media')) {
+                return router.push('/dashboard')
+            }
+
             setProfile(profile)
 
             const { data: campaigns } = await supabase
@@ -113,22 +119,12 @@ export default function ArchivePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {archivedCampaigns?.map((campaign) => (
-                            <div key={campaign.id} className="relative">
-                                <CampaignCard
-                                    campaign={campaign}
-                                    isArchive={true}
-                                    onClick={() => setSelectedCampaign(campaign)}
-                                />
-                                {profile.role === 'church' && (
-                                    <button
-                                        onClick={() => handleStatusChange(campaign.id, 'waiting')}
-                                        className="absolute top-4 right-12 p-2 bg-white border border-zinc-200 rounded-lg hover:border-zinc-900 transition-all shadow-sm group z-10"
-                                        title="Wiederverwenden"
-                                    >
-                                        <RotateCcw className="h-4 w-4 text-zinc-400 group-hover:text-zinc-900" />
-                                    </button>
-                                )}
-                            </div>
+                            <CampaignCard
+                                key={campaign.id}
+                                campaign={campaign}
+                                isArchive={true}
+                                onClick={() => setSelectedCampaign(campaign)}
+                            />
                         ))}
                         {(!archivedCampaigns || archivedCampaigns.length === 0) && (
                             <div className="col-span-full py-20 bg-white rounded-3xl border border-zinc-100 text-center flex flex-col items-center justify-center text-zinc-400">
@@ -146,9 +142,14 @@ export default function ArchivePage() {
                     isOpen={!!selectedCampaign}
                     onOpenChange={(open) => !open && setSelectedCampaign(null)}
                     campaign={selectedCampaign}
+                    onUpdate={(updated) => {
+                        setArchivedCampaigns(prev => prev.map(c => c.id === updated.id ? updated : c))
+                        setSelectedCampaign(updated)
+                    }}
                     onStatusChange={handleStatusChange}
                     onPriorityChange={handlePriorityChange}
                     onArchive={handleArchive}
+                    canEdit={true}
                     role={profile.role}
                 />
             )}

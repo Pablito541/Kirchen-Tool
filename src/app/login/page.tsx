@@ -1,37 +1,57 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Church, Briefcase, ArrowRight } from 'lucide-react'
+import { Briefcase, ArrowRight } from 'lucide-react'
 import { login, signInWithOtp } from './actions'
 
 export default function LoginPage() {
     const [role, setRole] = useState<'church' | 'agency'>('church')
-    const [isPasswordLogin, setIsPasswordLogin] = useState(true)
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
+    const [emailDetails, setEmailDetails] = useState('')
     const [isPending, startTransition] = useTransition()
+
+    // Persistent workspace selection
+    useEffect(() => {
+        const savedRole = localStorage.getItem('last_workspace') as 'church' | 'agency'
+        if (savedRole) setRole(savedRole)
+    }, [])
+
+    const handleRoleChange = (newRole: 'church' | 'agency') => {
+        setRole(newRole)
+        localStorage.setItem('last_workspace', newRole)
+        setError('') // Clear any previous errors
+    }
+
+    // Domain Guard
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value
+        setEmailDetails(val)
+        if (role === 'agency' && val.includes('@') && !val.includes('@eip-media')) {
+            setError('Kein Agentur-Zugang: Bitte nutze deine @eip-media.de Adresse.')
+        } else {
+            setError('')
+        }
+    }
 
     async function handleAction(formData: FormData) {
         setMessage('')
         setError('')
 
+        // Client-side domain guard for agency
+        const email = formData.get('email') as string
+        if (role === 'agency' && !email.includes('@eip-media')) {
+            setError('Zugriff verweigert: Nur für EIP Media Mitarbeiter.')
+            return
+        }
+
         startTransition(async () => {
-            // Append role hint to email if needed, or handle in action
-            if (isPasswordLogin) {
-                const result = await login(formData)
-                if (result?.error) {
-                    setError(result.error)
-                }
-            } else {
-                const result = await signInWithOtp(formData, window.location.origin)
-                if (result?.error) {
-                    setError(result.error)
-                } else if (result?.message) {
-                    setMessage(result.message)
-                }
+            const result = await login(formData)
+            if (result?.error) {
+                setError(result.error)
             }
         })
     }
@@ -47,7 +67,7 @@ export default function LoginPage() {
 
             <motion.div
                 layout
-                className="w-full max-w-[400px] space-y-10 text-center relative z-10"
+                className="w-full max-w-[400px] space-y-6 text-center relative z-10 pt-4"
             >
                 <AnimatePresence mode="wait">
                     <motion.div
@@ -56,28 +76,25 @@ export default function LoginPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.5 }}
-                        className="flex flex-col items-center gap-4 md:gap-6"
+                        className="flex flex-col items-center gap-0"
                     >
-                        <div className={`rounded-[2rem] p-4 md:p-6 shadow-premium border transition-all duration-700 ${role === 'church'
-                            ? 'bg-white border-white/50 ring-1 ring-black/5'
-                            : 'bg-zinc-900 border-zinc-800 ring-1 ring-white/5'
-                            }`}>
-                            {role === 'church' ? (
-                                <Church className="h-10 w-10 text-zinc-900" />
-                            ) : (
-                                <Briefcase className="h-10 w-10 text-white" />
-                            )}
+                        <div className="transition-all duration-700 flex items-center justify-center mb-2">
+                            <img
+                                src="/eip-media-logo.png"
+                                alt="EIP Media Logo"
+                                className="h-24 md:h-32 w-auto object-contain transition-all duration-700"
+                            />
                         </div>
                         <div className="space-y-2">
                             <h1 className={`text-3xl font-bold tracking-tight transition-colors duration-700 ${role === 'church' ? 'text-zinc-900' : 'text-zinc-50'
                                 }`}>
-                                {role === 'church' ? 'Kirche Login' : 'Agentur Dashboard'}
+                                {role === 'church' ? 'Kunden Login' : 'Agentur Login'}
                             </h1>
                             <p className={`text-base font-medium transition-colors duration-700 ${role === 'church' ? 'text-zinc-500' : 'text-zinc-400'
                                 }`}>
                                 {role === 'church'
-                                    ? 'Verwalte eure Kampagnen und Prioritäten.'
-                                    : 'Projektübersicht und Statusberichte.'}
+                                    ? 'Dein zentraler Ort für Kampagnen-Management und Performance-Tracking.'
+                                    : 'Projektübersicht, Analysen und Status-Management.'}
                             </p>
                         </div>
                     </motion.div>
@@ -87,7 +104,29 @@ export default function LoginPage() {
                     ? 'border-white/40 ring-1 ring-black/5'
                     : 'border-white/5 ring-1 ring-white/5 shadow-2xl shadow-black/40'
                     }`}>
-                    <form action={handleAction} className="space-y-4 md:space-y-6 text-left">
+                    <AnimatePresence>
+                        {(message || error) && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className={`text-sm font-bold mb-8 p-5 rounded-2xl border text-center relative overflow-hidden ${error
+                                    ? 'bg-red-500 text-white border-red-600 shadow-lg shadow-red-500/20'
+                                    : 'bg-emerald-500 text-white border-emerald-600 shadow-lg shadow-emerald-500/20'
+                                    }`}
+                            >
+                                <motion.div
+                                    initial={{ x: "-100%" }}
+                                    animate={{ x: "100%" }}
+                                    transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none"
+                                />
+                                {error || message}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <form action={handleAction} className="space-y-4 text-left">
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className={`text-[11px] font-bold uppercase tracking-[0.2em] ml-2 ${role === 'church' ? 'text-zinc-400' : 'text-zinc-500'
@@ -97,28 +136,27 @@ export default function LoginPage() {
                                     type="email"
                                     placeholder="name@beispiel.de"
                                     required
+                                    onChange={handleEmailChange}
                                     className={`h-14 rounded-2xl px-5 border-none transition-all ${role === 'church'
                                         ? 'bg-zinc-100/50 text-zinc-900 focus:bg-zinc-100 focus:ring-2 ring-zinc-200'
                                         : 'bg-zinc-950/50 text-white focus:bg-zinc-950 focus:ring-2 ring-zinc-800 placeholder:text-zinc-700'
                                         }`}
                                 />
                             </div>
-                            {isPasswordLogin && (
-                                <div className="space-y-2">
-                                    <label className={`text-[11px] font-bold uppercase tracking-[0.2em] ml-2 ${role === 'church' ? 'text-zinc-400' : 'text-zinc-500'
-                                        }`}>Passwort</label>
-                                    <Input
-                                        name="password"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        required
-                                        className={`h-14 rounded-2xl px-5 border-none transition-all ${role === 'church'
-                                            ? 'bg-zinc-100/50 text-zinc-900 focus:bg-zinc-100 focus:ring-2 ring-zinc-200'
-                                            : 'bg-zinc-950/50 text-white focus:bg-zinc-950 focus:ring-2 ring-zinc-800 placeholder:text-zinc-700'
-                                            }`}
-                                    />
-                                </div>
-                            )}
+                            <div className="space-y-2">
+                                <label className={`text-[11px] font-bold uppercase tracking-[0.2em] ml-2 ${role === 'church' ? 'text-zinc-400' : 'text-zinc-500'
+                                    }`}>Passwort</label>
+                                <Input
+                                    name="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    required
+                                    className={`h-14 rounded-2xl px-5 border-none transition-all ${role === 'church'
+                                        ? 'bg-zinc-100/50 text-zinc-900 focus:bg-zinc-100 focus:ring-2 ring-zinc-200'
+                                        : 'bg-zinc-950/50 text-white focus:bg-zinc-950 focus:ring-2 ring-zinc-800 placeholder:text-zinc-700'
+                                        }`}
+                                />
+                            </div>
                         </div>
 
                         <Button
@@ -132,54 +170,34 @@ export default function LoginPage() {
                             {isPending ? 'Authentifizierung...' : 'Anmelden'}
                         </Button>
                     </form>
+                </div>
 
-                    <div className="mt-8 pt-8 border-t border-zinc-200/10 flex justify-center">
-                        <button
-                            onClick={() => setIsPasswordLogin(!isPasswordLogin)}
-                            className={`text-[11px] font-bold uppercase tracking-[0.2em] transition-all hover:tracking-[0.25em] ${role === 'church' ? 'text-zinc-400 hover:text-zinc-900' : 'text-zinc-500 hover:text-zinc-300'
-                                }`}
-                        >
-                            {isPasswordLogin ? 'Magic Link senden' : 'Passwort verwenden'}
-                        </button>
+                <div className="flex flex-col items-center gap-2">
+                    <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${role === 'church' ? 'text-zinc-300' : 'text-zinc-600'}`}>Arbeitsbereich wechseln</span>
+                    <div className="flex justify-center pb-8">
+                        {role === 'church' ? (
+                            <button
+                                onClick={() => handleRoleChange('agency')}
+                                className="flex items-center gap-3 text-sm font-bold text-zinc-400 hover:text-zinc-900 transition-all group"
+                            >
+                                <Briefcase className="h-4 w-4" />
+                                <span>Agentur Login</span>
+                                <ArrowRight className="h-4 w-4 transform group-hover:translate-x-2 transition-transform" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => handleRoleChange('church')}
+                                className="flex items-center gap-3 text-sm font-bold text-zinc-500 hover:text-white transition-all group"
+                            >
+                                <Briefcase className="h-4 w-4" />
+                                <span>Kunden Login</span>
+                                <ArrowRight className="h-4 w-4 transform group-hover:translate-x-2 transition-transform" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                <div className="flex justify-center pb-8">
-                    {role === 'church' ? (
-                        <button
-                            onClick={() => setRole('agency')}
-                            className="flex items-center gap-3 text-sm font-bold text-zinc-400 hover:text-zinc-900 transition-all group"
-                        >
-                            <Briefcase className="h-4 w-4" />
-                            <span>Agentur Dashboard</span>
-                            <ArrowRight className="h-4 w-4 transform group-hover:translate-x-2 transition-transform" />
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => setRole('church')}
-                            className="flex items-center gap-3 text-sm font-bold text-zinc-500 hover:text-white transition-all group"
-                        >
-                            <Church className="h-4 w-4" />
-                            <span>Kirchen-Login</span>
-                            <ArrowRight className="h-4 w-4 transform group-hover:translate-x-2 transition-transform" />
-                        </button>
-                    )}
-                </div>
-
-                {(message || error) && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`text-sm font-bold mt-10 p-5 rounded-2xl border ${error
-                            ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                            : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                            }`}
-                    >
-                        {error || message}
-                    </motion.div>
-                )}
-            </motion.div>
-        </div>
+            </motion.div >
+        </div >
     )
-
 }

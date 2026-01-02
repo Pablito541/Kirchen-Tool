@@ -81,7 +81,7 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated }: CreateC
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 required
-                                className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold placeholder:font-normal placeholder:text-zinc-400"
+                                className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold placeholder:font-normal placeholder:text-zinc-400 text-zinc-900"
                             />
                         </div>
 
@@ -91,14 +91,14 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated }: CreateC
                                 placeholder="https://..."
                                 value={formData.info_link}
                                 onChange={(e) => setFormData({ ...formData, info_link: e.target.value })}
-                                className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold placeholder:font-normal placeholder:text-zinc-400"
+                                className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold placeholder:font-normal placeholder:text-zinc-400 text-zinc-900"
                             />
                         </div>
 
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Beschreibung / Briefing</label>
                             <textarea
-                                className="w-full min-h-[120px] rounded-2xl border border-zinc-100 bg-zinc-50 p-5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-900/5 focus:bg-white focus:border-zinc-900 transition-all placeholder:font-normal placeholder:text-zinc-400"
+                                className="w-full min-h-[120px] rounded-2xl border border-zinc-100 bg-zinc-50 p-5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-900/5 focus:bg-white focus:border-zinc-900 transition-all placeholder:font-normal placeholder:text-zinc-400 text-zinc-900"
                                 placeholder="Details zur Kampagne..."
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}

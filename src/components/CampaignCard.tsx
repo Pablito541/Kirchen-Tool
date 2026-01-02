@@ -24,7 +24,6 @@ interface CampaignCardProps {
     isArchive?: boolean
     role?: string
     onClick?: () => void
-    onStatusChange?: (id: string, status: CampaignStatus) => void
     onPriorityChange?: (id: string, priority: PriorityLevel) => void
 }
 
@@ -211,6 +210,7 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
                             <ChevronDown className={cn("h-3.5 w-3.5 md:h-3 md:w-3 transition-transform", isOpen === 'priority' && "rotate-180")} />
                         </button>
                     )}
+
 
                     <a
                         href={campaign.info_link}

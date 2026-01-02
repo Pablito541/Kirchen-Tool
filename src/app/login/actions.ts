@@ -41,3 +41,30 @@ export async function signInWithOtp(formData: FormData, origin: string) {
 
     return { message: 'Überprüfe deine E-Mails für den Login-Link!' }
 }
+
+export async function createProfile() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'No authenticated user' }
+    }
+
+    const isEipMedia = user.email?.includes('@eip-media')
+    const role = isEipMedia ? 'agency' : 'church'
+
+    const { error } = await supabase.from('profiles').insert([
+        {
+            id: user.id,
+            full_name: user.email?.split('@')[0],
+            role: role,
+        }
+    ])
+
+    if (error) {
+        console.error('Create Profile Error:', error)
+        return { error: error.message }
+    }
+
+    redirect('/dashboard')
+}

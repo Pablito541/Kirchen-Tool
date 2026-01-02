@@ -63,7 +63,7 @@ export function UserMenu({ profile, onOpenSettings, onOpenAgencySettings }: User
                         </div>
                         <div className="mt-3">
                             <span className="inline-flex px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 border border-zinc-200/50">
-                                {profile.role === 'church' ? 'Kirche' : 'Agentur'}
+                                {profile.role === 'church' ? 'Kundenkonto' : 'Agentur'}
                             </span>
                         </div>
                     </div>
@@ -82,7 +82,7 @@ export function UserMenu({ profile, onOpenSettings, onOpenAgencySettings }: User
                             </button>
                         )}
 
-                        {onOpenSettings && (
+                        {onOpenSettings && profile.role !== 'church' && (
                             <button
                                 onClick={() => {
                                     onOpenSettings()

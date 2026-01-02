@@ -117,7 +117,7 @@ export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileS
                             </div>
                             <div className="text-center">
                                 <p className="text-sm font-bold text-zinc-900">
-                                    {profile.role === 'church' ? 'Kirchen-Logo' : 'Agentur-Logo'}
+                                    {profile.role === 'church' ? 'Kundenkonto' : 'Agentur-Logo'}
                                 </p>
                                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Upload empfohlen (PNG/JPG)</p>
                             </div>
