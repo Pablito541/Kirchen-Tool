@@ -72,7 +72,7 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
     const [isOpen, setIsOpen] = useState<'status' | 'priority' | null>(null)
     const buttonRef = useRef<HTMLButtonElement>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
-    const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null)
+    const [coords, setCoords] = useState<{ top: number; left: number; width: number; buttonWidth: number } | null>(null)
 
     const canEditStatus = role === 'agency'
     const canEditPriority = role === 'agency' || role === 'church'
@@ -85,7 +85,8 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
         setCoords({
             top: rect.bottom + window.scrollY,
             left: rect.left + window.scrollX,
-            width: 224
+            width: 224,
+            buttonWidth: rect.width
         })
         setIsOpen(isOpen === type ? null : type)
     }
@@ -231,7 +232,24 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
                     style={{
                         position: 'absolute',
                         top: coords.top + 12,
-                        left: coords.left - (coords.width - 80), // Offset to align right
+                        left: (() => {
+                            const dropdownWidth = coords.width
+                            const padding = 16
+                            const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 400
+
+                            // Berechne die ideale Mitte
+                            let left = coords.left - (dropdownWidth / 2) + (coords.buttonWidth / 2)
+
+                            // Verhindere das Überlaufen links
+                            left = Math.max(padding, left)
+
+                            // Verhindere das Überlaufen rechts
+                            if (left + dropdownWidth > windowWidth - padding) {
+                                left = windowWidth - dropdownWidth - padding
+                            }
+
+                            return left
+                        })(),
                         width: coords.width,
                         zIndex: 9999,
                         pointerEvents: 'auto'
@@ -261,17 +279,19 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
                                                 onMouseDown={(e) => e.stopPropagation()}
                                                 onClick={(e) => handleStatusClick(e, val)}
                                                 className={cn(
-                                                    "w-full text-left px-4 py-3 rounded-[18px] text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-between group/item",
+                                                    "w-full text-left px-4 py-3 rounded-[18px] text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-between group/item",
                                                     isActive
-                                                        ? "bg-zinc-900 text-white shadow-xl shadow-black/10"
-                                                        : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                                                        ? `${config.color.split(' shadow')[0]} shadow-lg ring-1 ring-black/5 scale-[1.02]`
+                                                        : "text-zinc-400 hover:bg-zinc-50 hover:text-zinc-900"
                                                 )}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-white" : config.color.split(' ')[0])} />
+                                                    <div className={cn("w-2 h-2 rounded-full transition-all",
+                                                        isActive ? (config.dot || "bg-current") : (config.dot || config.color.split(' ')[0])
+                                                    )} />
                                                     {config.label}
                                                 </div>
-                                                {isActive && <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />}
+                                                {isActive && <div className="w-1.5 h-1.5 bg-current opacity-20 rounded-full" />}
                                             </button>
                                         )
                                     })
@@ -286,15 +306,15 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
                                             className={cn(
                                                 "w-full text-left px-4 py-3 rounded-[18px] text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-between group/item border border-transparent",
                                                 isActive
-                                                    ? config.color + " shadow-sm scale-[1.02] border-current/10"
-                                                    : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+                                                    ? `${config.color.split(' shadow')[0]} shadow-lg ring-1 ring-black/5 scale-[1.02]`
+                                                    : "text-zinc-400 hover:bg-zinc-50 hover:text-zinc-900"
                                             )}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-current" : config.dot)} />
+                                                <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-white transition-all shadow-sm", config.dot)} />
                                                 {config.label.split(': ')[1]}
                                             </div>
-                                            {isActive && <div className="w-1.5 h-1.5 bg-current opacity-20 rounded-full" />}
+                                            {isActive && <div className="w-1.5 h-1.5 bg-black/10 rounded-full" />}
                                         </button>
                                     )
                                 })

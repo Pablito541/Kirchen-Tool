@@ -10,6 +10,7 @@ import { UserMenu } from '@/components/UserMenu'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Settings, Sliders, History } from 'lucide-react'
+import { deleteCampaignAction, updateCampaignStatusAction } from '@/app/actions/admin'
 import { DndContext, closestCenter } from '@dnd-kit/core'
 import {
     SortableContext,
@@ -59,6 +60,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
     const { items, setItems, sensors, handleDragEnd } = useCampaignDnd(campaigns, role)
 
     // Local UI state
+    const [isMounted, setIsMounted] = useState(false)
     const [selectedCampaign, setSelectedCampaign] = useState<any>(null)
     const [isDetailOpen, setIsDetailOpen] = useState(false)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -67,11 +69,15 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
     const router = useRouter()
     const supabase = createClient()
 
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
+
     // Apply branding color
     const primaryColor = brandingSettings?.primary_color || '#3b82f6'
 
     useEffect(() => {
-        setItems(campaigns.filter(c => !c.archived_at))
+        setItems(campaigns)
     }, [campaigns, setItems])
 
     const activeItems = useMemo(() => items.filter((_, idx) => idx < 6), [items])
@@ -96,16 +102,12 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
     }, [items])
 
     const handleStatusChange = async (id: string, status: CampaignStatus) => {
-        const { error } = await supabase
-            .from('campaigns')
-            .update({ status })
-            .eq('id', id)
+        const result = await updateCampaignStatusAction(id, status)
 
-        if (!error) {
+        if (result.success) {
             setItems(prev => prev.map(item => item.id === id ? { ...item, status } : item))
-            if (status === 'completed') {
-                router.refresh()
-            }
+        } else {
+            alert('Fehler beim Status-Update: ' + result.error)
         }
     }
 
@@ -125,16 +127,16 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
         setSelectedCampaign(updated)
     }
 
-    const handleArchiveCampaign = async (id: string) => {
-        const { error } = await supabase
-            .from('campaigns')
-            .update({ archived_at: new Date().toISOString() })
-            .eq('id', id)
+    const handleDeleteCampaign = async (id: string) => {
+        if (!window.confirm('Möchtest du diese Kampagne wirklich unwiderruflich löschen?')) return
 
-        if (!error) {
+        const result = await deleteCampaignAction(id)
+
+        if (result.success) {
             setItems(prev => prev.filter(item => item.id !== id))
             setIsDetailOpen(false)
-            router.refresh()
+        } else {
+            alert('Fehler beim Löschen: ' + result.error)
         }
     }
 
@@ -188,24 +190,40 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                         </div>
 
                         <div className="flex flex-col gap-4">
-                            <SortableContext items={activeItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                                {activeItems.map((campaign) => (
-                                    <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
-                                        <CampaignCard
-                                            campaign={campaign}
-                                            isFocus
-                                            role={role}
-                                            onClick={() => openDetail(campaign)}
-                                            onStatusChange={handleStatusChange}
-                                            onPriorityChange={handlePriorityChange}
-                                        />
-                                    </SortableItem>
-                                ))}
-                            </SortableContext>
+                            {isMounted ? (
+                                <SortableContext items={activeItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                                    {activeItems.map((campaign) => (
+                                        <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
+                                            <CampaignCard
+                                                campaign={campaign}
+                                                isFocus
+                                                role={role}
+                                                onClick={() => openDetail(campaign)}
+                                                onStatusChange={handleStatusChange}
+                                                onPriorityChange={handlePriorityChange}
+                                            />
+                                        </SortableItem>
+                                    ))}
+                                </SortableContext>
+                            ) : (
+                                activeItems.map((campaign) => (
+                                    <CampaignCard
+                                        key={campaign.id}
+                                        campaign={campaign}
+                                        isFocus
+                                        role={role}
+                                        onClick={() => openDetail(campaign)}
+                                        onStatusChange={handleStatusChange}
+                                        onPriorityChange={handlePriorityChange}
+                                    />
+                                ))
+                            )}
                             {activeItems.length === 0 && (
-                                <div className="border-2 border-dashed border-zinc-200 rounded-[2rem] py-20 flex flex-col items-center justify-center text-zinc-400 bg-zinc-50/50">
-                                    <p className="font-bold text-lg text-zinc-500">Keine aktiven Missionen</p>
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] mt-2 text-zinc-400">Zieh Projekte hierher um sie zu priorisieren</p>
+                                <div className="border-2 border-dashed border-zinc-200 rounded-[2.5rem] py-24 flex flex-col items-center justify-center text-center px-6 bg-zinc-50/50">
+                                    <p className="font-black text-xl text-zinc-900 tracking-tight">Keine aktiven Kampagnen</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] mt-3 text-zinc-400 max-w-[280px] md:max-w-none leading-relaxed">
+                                        Erstellen Sie eine neue Kampagne oder verschieben Sie bestehende Projekte hierher, um sie zu priorisieren.
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -229,22 +247,38 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                             </div>
 
                             <div className="space-y-4">
-                                <SortableContext items={futureItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                                    {futureItems.map((campaign) => (
-                                        <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
-                                            <CampaignCard
-                                                campaign={campaign}
-                                                role={role}
-                                                onClick={() => openDetail(campaign)}
-                                                onStatusChange={handleStatusChange}
-                                                onPriorityChange={handlePriorityChange}
-                                            />
-                                        </SortableItem>
-                                    ))}
-                                </SortableContext>
+                                {isMounted ? (
+                                    <SortableContext items={futureItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                                        {futureItems.map((campaign) => (
+                                            <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
+                                                <CampaignCard
+                                                    campaign={campaign}
+                                                    role={role}
+                                                    onClick={() => openDetail(campaign)}
+                                                    onStatusChange={handleStatusChange}
+                                                    onPriorityChange={handlePriorityChange}
+                                                />
+                                            </SortableItem>
+                                        ))}
+                                    </SortableContext>
+                                ) : (
+                                    futureItems.map((campaign) => (
+                                        <CampaignCard
+                                            key={campaign.id}
+                                            campaign={campaign}
+                                            role={role}
+                                            onClick={() => openDetail(campaign)}
+                                            onStatusChange={handleStatusChange}
+                                            onPriorityChange={handlePriorityChange}
+                                        />
+                                    ))
+                                )}
                                 {futureItems.length === 0 && (
-                                    <div className="py-20 text-center bg-zinc-100/30 rounded-[2rem] border border-black/5">
-                                        <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Die Vorbereitung ist leer</p>
+                                    <div className="border-2 border-dashed border-zinc-200 rounded-[2.5rem] py-24 flex flex-col items-center justify-center text-center px-6 bg-zinc-50/50">
+                                        <p className="font-black text-xl text-zinc-900 tracking-tight">Keine zukünftigen Kampagnen</p>
+                                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] mt-3 text-zinc-400 max-w-[280px] md:max-w-none leading-relaxed">
+                                            Hier erscheinen Projekte, die für eine spätere Umsetzung geplant sind.
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -276,7 +310,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                 campaign={selectedCampaign}
                 canEdit={role === 'church' || role === 'agency'}
                 onUpdate={handleUpdateCampaign}
-                onArchive={handleArchiveCampaign}
+                onDelete={handleDeleteCampaign}
                 onStatusChange={handleStatusChange}
                 onPriorityChange={handlePriorityChange}
                 role={role}

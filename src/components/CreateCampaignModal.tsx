@@ -66,6 +66,7 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated }: CreateC
                 <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] md:w-full max-w-md bg-white rounded-[2rem] p-6 md:p-8 shadow-2xl z-50 animate-in zoom-in-95 duration-200 outline-none max-h-[90vh] overflow-y-auto">
                     <div className="flex items-center justify-between mb-8">
                         <Dialog.Title className="text-2xl font-black tracking-tight">Neue Kampagne</Dialog.Title>
+                        <Dialog.Description className="sr-only">Erstelle eine neue Kampagne durch Eingabe der Details.</Dialog.Description>
                         <Dialog.Close asChild>
                             <button className="p-2 hover:bg-zinc-100 rounded-xl transition-colors">
                                 <X className="h-5 w-5 text-zinc-400" />

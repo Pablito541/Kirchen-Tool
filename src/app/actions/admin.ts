@@ -120,3 +120,62 @@ export async function getChurchUsers() {
 
     return enhancedProfiles
 }
+
+export async function deleteCampaignAction(id: string) {
+    const supabase = await createClient()
+    const { data: { user: requester } } = await supabase.auth.getUser()
+    if (!requester) return { error: 'Nicht authentifiziert.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', requester.id)
+        .single()
+
+    if (profile?.role !== 'agency' && profile?.role !== 'church') {
+        return { error: 'Keine Berechtigung zum Löschen.' }
+    }
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('campaigns')
+        .delete()
+        .eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/archive')
+    return { success: true }
+}
+
+export async function updateCampaignStatusAction(id: string, status: string) {
+    const supabase = await createClient()
+    const { data: { user: requester } } = await supabase.auth.getUser()
+    if (!requester) return { error: 'Nicht authentifiziert.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', requester.id)
+        .single()
+
+    if (profile?.role !== 'agency' && profile?.role !== 'church') {
+        return { error: 'Keine Berechtigung zur Statusänderung.' }
+    }
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('campaigns')
+        .update({
+            status,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/archive')
+    return { success: true }
+}

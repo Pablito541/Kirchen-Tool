@@ -74,7 +74,7 @@ export default async function DashboardPage() {
         supabase
             .from('campaigns')
             .select('*')
-            .is('archived_at', null) // Server-side filtering
+            .neq('status', 'completed') // Zeige nur nicht-abgeschlossene auf dem Dashboard
             .order('priority', { ascending: true }),
         profile.role === 'church'
             ? supabase.from('dashboard_settings').select('*').eq('church_id', user.id).single()

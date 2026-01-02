@@ -69,9 +69,9 @@ export function CampaignCompletionModal({ isOpen, onOpenChange, campaign, onComp
                             <Dialog.Title className="text-2xl font-black tracking-tight text-zinc-900">
                                 Kampagne abschließen
                             </Dialog.Title>
-                            <p className="text-sm font-bold text-zinc-400 mt-1 uppercase tracking-wide">
+                            <Dialog.Description className="text-sm font-bold text-zinc-400 mt-1 uppercase tracking-wide">
                                 Abschlussbericht & Learnings
-                            </p>
+                            </Dialog.Description>
                         </div>
                         <Dialog.Close asChild>
                             <button className="p-2 hover:bg-zinc-100 rounded-xl transition-colors">

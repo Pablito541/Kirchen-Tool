@@ -80,7 +80,7 @@ export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileS
         <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
             <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 animate-in fade-in" />
-                <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl z-50 animate-in zoom-in-95 duration-200">
+                <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] max-w-md bg-white rounded-[2rem] p-5 md:p-8 shadow-2xl z-50 animate-in zoom-in-95 duration-200">
                     <div className="flex items-center justify-between mb-8">
                         <Dialog.Title className="text-2xl font-black tracking-tight">Profil & Design</Dialog.Title>
                         <Dialog.Close asChild>

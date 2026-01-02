@@ -7,6 +7,7 @@ import { ArrowLeft, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { CampaignDetailModal } from '@/components/CampaignDetailModal'
+import { deleteCampaignAction, updateCampaignStatusAction } from '@/app/actions/admin'
 
 export default function ArchivePage() {
     const [user, setUser] = useState<any>(null)
@@ -51,18 +52,13 @@ export default function ArchivePage() {
     }, [supabase, router])
 
     const handleStatusChange = async (id: string, status: string) => {
-        const { error } = await supabase
-            .from('campaigns')
-            .update({
-                status,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', id)
+        const result = await updateCampaignStatusAction(id, status)
 
-        if (!error) {
+        if (result.success) {
             setArchivedCampaigns(prev => prev.filter(c => c.id !== id))
             setSelectedCampaign(null)
-            router.refresh()
+        } else {
+            alert('Fehler beim Status-Update: ' + result.error)
         }
     }
 
@@ -81,18 +77,16 @@ export default function ArchivePage() {
         }
     }
 
-    const handleArchive = async (id: string) => {
-        // In archive, this might mean 'delete' or 'permanent archive'
-        // For now, let's just use the same toggle if needed, or leave as is
-        const { error } = await supabase
-            .from('campaigns')
-            .update({ archived_at: new Date().toISOString() })
-            .eq('id', id)
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Möchtest du diese Kampagne wirklich unwiderruflich aus der Datenbank löschen?')) return
 
-        if (!error) {
+        const result = await deleteCampaignAction(id)
+
+        if (result.success) {
             setArchivedCampaigns(prev => prev.filter(c => c.id !== id))
             setSelectedCampaign(null)
-            router.refresh()
+        } else {
+            alert('Fehler beim Löschen: ' + result.error)
         }
     }
 
@@ -148,7 +142,7 @@ export default function ArchivePage() {
                     }}
                     onStatusChange={handleStatusChange}
                     onPriorityChange={handlePriorityChange}
-                    onArchive={handleArchive}
+                    onDelete={handleDelete}
                     canEdit={true}
                     role={profile.role}
                 />

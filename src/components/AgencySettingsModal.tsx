@@ -123,10 +123,10 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
         <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
             <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 animate-in fade-in" />
-                <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-2xl bg-zinc-900 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white flex flex-col max-h-[90vh]">
+                <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] max-w-2xl bg-zinc-900 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white flex flex-col max-h-[90vh]">
 
                     {/* Header */}
-                    <div className="p-8 pb-4 flex items-center justify-between border-b border-white/5">
+                    <div className="p-5 md:p-8 pb-4 flex items-center justify-between border-b border-white/5">
                         <div className="space-y-1">
                             <Dialog.Title className="text-2xl font-black tracking-tight flex items-center gap-3">
                                 Agentur Dashboard
@@ -144,7 +144,7 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex gap-6 px-8 border-b border-white/5">
+                    <div className="flex gap-6 px-5 md:px-8 border-b border-white/5">
                         <button
                             onClick={() => setActiveTab('users')}
                             className={`py-4 text-sm font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab === 'users' ? 'text-white border-blue-500' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}
@@ -159,7 +159,7 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
                         </button>
                     </div>
 
-                    <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
+                    <div className="p-5 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
                         {fetching ? (
                             <div className="h-64 flex items-center justify-center">
                                 <Loader2 className="h-8 w-8 animate-spin text-zinc-600" />
@@ -167,7 +167,7 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
                         ) : activeTab === 'users' ? (
                             <div className="space-y-10">
                                 {/* Create User Form */}
-                                <div className="space-y-6 bg-white/5 p-6 rounded-3xl border border-white/5">
+                                <div className="space-y-6 bg-white/5 p-4 md:p-6 rounded-3xl border border-white/5">
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
                                             <Plus className="h-5 w-5" />

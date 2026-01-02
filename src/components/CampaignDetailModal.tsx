@@ -15,7 +15,7 @@ interface CampaignDetailModalProps {
     onOpenChange: (open: boolean) => void
     campaign: any
     onUpdate: (updatedCampaign: any) => void
-    onArchive: (id: string) => void
+    onDelete: (id: string) => void
     onStatusChange: (id: string, status: any) => void
     onPriorityChange: (id: string, priority: any) => void
     canEdit: boolean
@@ -27,7 +27,7 @@ export function CampaignDetailModal({
     onOpenChange,
     campaign,
     onUpdate,
-    onArchive,
+    onDelete,
     onStatusChange,
     onPriorityChange,
     canEdit,
@@ -119,7 +119,8 @@ export function CampaignDetailModal({
                                         {/* Status and Priority Dropdowns - Available for all users */}
                                         <div className="flex flex-wrap items-center gap-3">
                                             {/* Status Selector */}
-                                            <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-zinc-100/80 rounded-2xl border border-black/5 backdrop-blur-sm">
+                                            <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-2xl border border-black/5 backdrop-blur-sm overflow-x-auto scrollbar-hide shrink-0">
+                                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2">Status:</span>
                                                 {statuses.filter(s => s.value !== 'completed').map((s) => (
                                                     <button
                                                         key={s.value}
@@ -128,7 +129,7 @@ export function CampaignDetailModal({
                                                             onStatusChange(campaign.id, s.value)
                                                         }}
                                                         className={cn(
-                                                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
+                                                            "px-2.5 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap",
                                                             currentStatus === s.value
                                                                 ? s.color + " shadow-sm scale-105 ring-1 ring-black/5"
                                                                 : "text-zinc-500 hover:text-zinc-700 hover:bg-white/50"
@@ -140,8 +141,8 @@ export function CampaignDetailModal({
                                             </div>
 
                                             {/* Priority Selector */}
-                                            <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-zinc-100/80 rounded-2xl border border-black/5 backdrop-blur-sm">
-                                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-3">Prio:</span>
+                                            <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-2xl border border-black/5 backdrop-blur-sm overflow-x-auto scrollbar-hide shrink-0">
+                                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2">Prio:</span>
                                                 {priorities.map((p) => (
                                                     <button
                                                         key={p.value}
@@ -150,7 +151,7 @@ export function CampaignDetailModal({
                                                             onPriorityChange(campaign.id, p.value)
                                                         }}
                                                         className={cn(
-                                                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
+                                                            "px-2.5 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap",
                                                             currentPriority === p.value
                                                                 ? p.color + " shadow-sm scale-105 ring-1 ring-black/5"
                                                                 : "text-zinc-500 hover:text-zinc-700 hover:bg-white/50"
@@ -178,6 +179,9 @@ export function CampaignDetailModal({
                                         {campaign.title}
                                     </Dialog.Title>
                                 )}
+                                <Dialog.Description className="sr-only">
+                                    Details und Verwaltung für die Kampagne {campaign.title}
+                                </Dialog.Description>
                             </div>
 
                             {/* Content Section */}
@@ -349,11 +353,11 @@ export function CampaignDetailModal({
                                 <div className="pt-8 md:pt-10 flex flex-col md:flex-row gap-8 md:items-center justify-between border-t border-black/[0.03]">
                                     {campaign.status !== 'completed' && (
                                         <button
-                                            onClick={() => onArchive(campaign.id)}
-                                            className="flex items-center gap-2 text-xs font-black text-zinc-400 hover:text-red-500 transition-all uppercase tracking-widest group order-2 md:order-1"
+                                            onClick={() => onDelete(campaign.id)}
+                                            className="flex items-center justify-center md:justify-start gap-2 text-xs font-black text-red-400 hover:text-red-600 transition-all uppercase tracking-widest group order-2 md:order-1"
                                         >
                                             <Trash2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                                            Kampagne Archivieren
+                                            Kampagne löschen
                                         </button>
                                     )}
                                     <div className="flex flex-col sm:flex-row gap-3 md:gap-4 order-1 md:order-2">
