@@ -25,6 +25,7 @@ interface CampaignCardProps {
     role?: string
     onClick?: () => void
     onPriorityChange?: (id: string, priority: PriorityLevel) => void
+    onStatusChange?: (id: string, status: CampaignStatus) => void
 }
 
 const statusConfig = {
