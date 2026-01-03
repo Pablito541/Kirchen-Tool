@@ -28,7 +28,7 @@ interface CampaignCardProps {
     onStatusChange?: (id: string, status: CampaignStatus) => void
 }
 
-const statusConfig = {
+const statusConfig: Record<CampaignStatus, { label: string; color: string; cardBg: string; dot?: string }> = {
     waiting: {
         label: 'Wartet',
         color: 'bg-zinc-100 text-zinc-600 border-zinc-200 shadow-none',
