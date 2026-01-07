@@ -242,13 +242,19 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
     }
 
     const handleDeleteCampaign = async (id: string) => {
-        const result = await deleteCampaignAction(id)
+        try {
+            const result = await deleteCampaignAction(id)
 
-        if (result.success) {
-            setItems(prev => prev.filter(item => item.id !== id))
-            setIsDetailOpen(false)
-        } else {
-            alert('Fehler beim Löschen: ' + result.error)
+            if (result.success) {
+                setItems(prev => prev.filter(item => item.id !== id))
+                setIsDetailOpen(false)
+            } else {
+                console.error('Delete action failed:', result.error)
+                alert('Fehler beim Löschen: ' + result.error)
+            }
+        } catch (error) {
+            console.error('Unexpected error during delete:', error)
+            alert('Ein unerwarteter Fehler ist aufgetreten.')
         }
     }
 

@@ -37,35 +37,40 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
 
     useEffect(() => {
         const loadData = async () => {
-            setFetching(true)
+            try {
+                setFetching(true)
 
-            // Load Users
-            const clientUsers = await getClientUsers()
-            setUsers(clientUsers)
+                // Load Users
+                const clientUsers = await getClientUsers()
+                setUsers(clientUsers)
 
-            // Select first user for design settings if available
-            if (clientUsers.length > 0) {
-                const firstUser = clientUsers[0]
-                setClientUser(firstUser)
+                // Select first user for design settings if available
+                if (clientUsers && clientUsers.length > 0) {
+                    const firstUser = clientUsers[0]
+                    setClientUser(firstUser)
 
-                const { data: existingSettings } = await supabase
-                    .from('dashboard_settings')
-                    .select('*')
-                    .eq('client_id', firstUser.id)
-                    .single()
+                    const { data: existingSettings } = await supabase
+                        .from('dashboard_settings')
+                        .select('*')
+                        .eq('client_id', firstUser.id)
+                        .single()
 
-                if (existingSettings) {
-                    setSettings({
-                        primary_color: existingSettings.primary_color,
-                        welcome_message: existingSettings.welcome_message,
-                        show_future_projects: existingSettings.show_future_projects,
-                        client_id: firstUser.id
-                    })
-                } else {
-                    setSettings(s => ({ ...s, client_id: firstUser.id }))
+                    if (existingSettings) {
+                        setSettings({
+                            primary_color: existingSettings.primary_color,
+                            welcome_message: existingSettings.welcome_message,
+                            show_future_projects: existingSettings.show_future_projects,
+                            client_id: firstUser.id
+                        })
+                    } else {
+                        setSettings(s => ({ ...s, client_id: firstUser.id }))
+                    }
                 }
+            } catch (error) {
+                console.error('Error loading agency settings:', error)
+            } finally {
+                setFetching(false)
             }
-            setFetching(false)
         }
 
         if (isOpen) loadData()

@@ -17,7 +17,7 @@ interface CampaignDetailModalProps {
     onOpenChange: (open: boolean) => void
     campaign: any
     onUpdate: (updatedCampaign: any) => void
-    onDelete: (id: string) => void
+    onDelete: (id: string) => Promise<void> | void
     onStatusChange: (id: string, status: any) => void
     onPriorityChange: (id: string, priority: any) => void
     canEdit: boolean
@@ -47,6 +47,7 @@ export function CampaignDetailModal({
         description: campaign?.description || '',
         start_date: campaign?.start_date || '',
     })
+    const [deleteLoading, setDeleteLoading] = useState(false)
     const [isDeleteConfirm, setIsDeleteConfirm] = useState(false)
 
     useEffect(() => {
@@ -87,6 +88,17 @@ export function CampaignDetailModal({
             alert(error.message)
         }
         setLoading(false)
+    }
+
+    const handleDelete = async () => {
+        setDeleteLoading(true)
+        try {
+            await onDelete(campaign.id)
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setDeleteLoading(false)
+        }
     }
 
     if (!campaign) return null
@@ -373,10 +385,11 @@ export function CampaignDetailModal({
                                             <div className="flex items-center gap-2 order-2 md:order-1">
                                                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mr-2">Wirklich löschen?</span>
                                                 <button
-                                                    onClick={() => onDelete(campaign.id)}
-                                                    className="flex items-center justify-center gap-2 text-xs font-black text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-all uppercase tracking-widest"
+                                                    onClick={handleDelete}
+                                                    disabled={deleteLoading}
+                                                    className="flex items-center justify-center gap-2 text-xs font-black text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    Ja
+                                                    {deleteLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Ja'}
                                                 </button>
                                                 <button
                                                     onClick={() => setIsDeleteConfirm(false)}
