@@ -294,8 +294,8 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                     <div className="mx-auto max-w-5xl px-4 md:px-8">
                         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 md:mb-12">
                             <div className="space-y-1">
-                                <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: primaryColor }}>
-                                    {role === ROLES.CLIENT && brandingSettings?.welcome_message ? brandingSettings.welcome_message : `Willkommen, ${profile.full_name || 'Nutzer'}!`}
+                                <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-blue-600">
+                                    {`Willkommen, ${profile.full_name || 'Nutzer'}!`}
                                 </h2>
                                 <p className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight leading-tight flex items-center gap-4">
                                     Aktive Kampagnen
@@ -307,6 +307,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                             <CreateCampaignModal
                                 userId={userId}
                                 nextPriority={items.length + 1}
+                                onCreated={(nc) => setItems(prev => [...prev, nc])}
                                 onCreated={(nc) => setItems(prev => [...prev, nc])}
                             />
                         </div>
@@ -323,6 +324,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                                 onClick={() => openDetail(campaign)}
                                                 onStatusChange={handleStatusChange}
                                                 onPriorityChange={handlePriorityChange}
+                                                primaryColor={primaryColor}
                                             />
                                         </SortableItem>
                                     ))}
@@ -337,6 +339,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                         onClick={() => openDetail(campaign)}
                                         onStatusChange={handleStatusChange}
                                         onPriorityChange={handlePriorityChange}
+                                        primaryColor={primaryColor}
                                     />
                                 ))
                             )}
@@ -384,6 +387,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                                     onClick={() => openDetail(campaign)}
                                                     onStatusChange={handleStatusChange}
                                                     onPriorityChange={handlePriorityChange}
+                                                    primaryColor={primaryColor}
                                                 />
                                             </SortableItem>
                                         ))}
@@ -397,6 +401,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                             onClick={() => openDetail(campaign)}
                                             onStatusChange={handleStatusChange}
                                             onPriorityChange={handlePriorityChange}
+                                            primaryColor={primaryColor}
                                         />
                                     ))
                                 )}
@@ -440,19 +445,24 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                 onDelete={handleDeleteCampaign}
                 onStatusChange={handleStatusChange}
                 onPriorityChange={handlePriorityChange}
+                onPriorityChange={handlePriorityChange}
                 role={role}
+                primaryColor={primaryColor}
             />
 
             <ProfileSettingsModal
                 isOpen={isSettingsOpen}
                 onOpenChange={setIsSettingsOpen}
                 profile={profile}
+                primaryColor={primaryColor}
             />
 
             <AgencySettingsModal
                 isOpen={isAgencySettingsOpen}
                 onOpenChange={setIsAgencySettingsOpen}
+                onOpenChange={setIsAgencySettingsOpen}
                 agencyId={userId}
+                primaryColor={primaryColor}
             />
         </div>
     )

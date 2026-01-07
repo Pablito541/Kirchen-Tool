@@ -14,9 +14,10 @@ interface ProfileSettingsModalProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
     profile: any
+    primaryColor?: string
 }
 
-export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileSettingsModalProps) {
+export function ProfileSettingsModal({ isOpen, onOpenChange, profile, primaryColor = '#18181b' }: ProfileSettingsModalProps) {
     const [loading, setLoading] = useState(false)
     const [fullName, setFullName] = useState(profile?.full_name || '')
     const [uploading, setUploading] = useState(false)
@@ -84,7 +85,7 @@ export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileS
                 <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 animate-in fade-in" />
                 <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] max-w-md bg-white rounded-[2rem] p-5 md:p-8 shadow-2xl z-50 animate-in zoom-in-95 duration-200">
                     <div className="flex items-center justify-between mb-8">
-                        <Dialog.Title className="text-2xl font-black tracking-tight">Profil & Design</Dialog.Title>
+                        <Dialog.Title className="text-2xl font-black tracking-tight text-zinc-900">Profil & Design</Dialog.Title>
                         <Dialog.Close asChild>
                             <button className="p-2 hover:bg-zinc-100 rounded-xl transition-colors">
                                 <X className="h-5 w-5 text-zinc-400" />
@@ -121,25 +122,26 @@ export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileS
                                 <p className="text-sm font-bold text-zinc-900">
                                     {profile.role === ROLES.CLIENT ? 'Kundenkonto' : 'Agentur-Logo'}
                                 </p>
-                                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Upload empfohlen (PNG/JPG)</p>
+                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Upload empfohlen (PNG/JPG)</p>
                             </div>
                         </div>
 
                         <div className="space-y-6">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Dein Name</label>
+                                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Dein Name</label>
                                 <Input
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                     placeholder="Vorname Nachname"
-                                    className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold"
+                                    className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold text-zinc-900"
                                 />
                             </div>
 
                             <Button
                                 onClick={handleSaveProfile}
                                 disabled={loading}
-                                className="w-full h-14 bg-zinc-900 text-white hover:bg-zinc-800 rounded-2xl font-bold transition-all active:scale-95"
+                                className="w-full h-14 text-white hover:brightness-110 rounded-2xl font-bold transition-all active:scale-95"
+                                style={{ backgroundColor: primaryColor }}
                             >
                                 {loading ? 'Speichere...' : 'Einstellungen speichern'}
                             </Button>

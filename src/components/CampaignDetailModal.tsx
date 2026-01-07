@@ -33,7 +33,7 @@ export function CampaignDetailModal({
     onStatusChange,
     onPriorityChange,
     canEdit,
-    role
+    role,
 }: CampaignDetailModalProps) {
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
@@ -279,7 +279,7 @@ export function CampaignDetailModal({
                                                             <ExternalLink className="h-4 w-4 text-zinc-300 group-hover:text-zinc-900 transition-all" />
                                                         </div>
                                                         <div>
-                                                            <span className="text-sm font-bold text-zinc-900 block group-hover:underline decoration-2 underline-offset-2 decoration-zinc-200">Dokumentation öffnen</span>
+                                                            <span className="text-sm font-bold block group-hover:underline decoration-2 underline-offset-2 decoration-zinc-200 text-zinc-900">Dokumentation öffnen</span>
                                                             <span className="text-xs font-medium text-zinc-400 truncate block mt-0.5 max-w-[200px]">
                                                                 {(() => {
                                                                     try {

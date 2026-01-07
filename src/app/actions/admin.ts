@@ -118,25 +118,41 @@ export async function getClientUsers() {
 }
 
 export async function deleteCampaignAction(id: string): Promise<ActionResponse> {
-    const permission = await checkPermission([ROLES.AGENCY, ROLES.CLIENT])
-    if (!permission) return { error: 'Keine Berechtigung zum Löschen.' }
+    try {
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+            return { error: 'Server Konfiguration Fehler: Supabase URL oder Anon Key fehlt.' }
+        }
 
-    const supabaseAdmin = createAdminClient()
-    const { error } = await supabaseAdmin
-        .from('campaigns')
-        .delete()
-        .eq('id', id)
+        const permission = await checkPermission([ROLES.AGENCY, ROLES.CLIENT])
+        if (!permission) return { error: 'Keine Berechtigung zum Löschen.' }
 
-    if (error) return { error: error.message }
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            return { error: 'Server Konfiguration Fehler: Service Role Key fehlt.' }
+        }
 
-    revalidatePath('/dashboard')
-    revalidatePath('/archive')
-    return { success: true }
+        const supabaseAdmin = createAdminClient()
+        const { error } = await supabaseAdmin
+            .from('campaigns')
+            .delete()
+            .eq('id', id)
+
+        if (error) return { error: error.message }
+
+        revalidatePath('/dashboard')
+        revalidatePath('/archive')
+        return { success: true }
+    } catch (e: any) {
+        return { error: 'Server Exception: ' + (e?.message || JSON.stringify(e)) }
+    }
 }
 
 export async function updateCampaignStatusAction(id: string, status: string): Promise<ActionResponse> {
     const permission = await checkPermission([ROLES.AGENCY, ROLES.CLIENT])
     if (!permission) return { error: 'Keine Berechtigung zur Statusänderung.' }
+
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return { error: 'Server Konfiguration Fehler: Service Role Key fehlt.' }
+    }
 
     const supabaseAdmin = createAdminClient()
     const { error } = await supabaseAdmin
@@ -151,5 +167,27 @@ export async function updateCampaignStatusAction(id: string, status: string): Pr
 
     revalidatePath('/dashboard')
     revalidatePath('/archive')
+    return { success: true }
+}
+
+export async function saveDashboardSettings(settings: any): Promise<ActionResponse> {
+    const permission = await checkPermission([ROLES.AGENCY])
+    if (!permission) return { error: 'Keine Berechtigung.' }
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('dashboard_settings')
+        .upsert({
+            client_id: settings.client_id,
+            agency_id: settings.agency_id,
+            primary_color: settings.primary_color,
+            welcome_message: settings.welcome_message,
+            show_future_projects: settings.show_future_projects,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'client_id' })
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard')
     return { success: true }
 }

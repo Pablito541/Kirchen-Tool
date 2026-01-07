@@ -78,7 +78,7 @@ export default async function DashboardPage() {
             .order('priority', { ascending: true }),
         profile.role === 'client'
             ? supabase.from('dashboard_settings').select('*').eq('client_id', user.id).single()
-            : Promise.resolve({ data: null })
+            : supabase.from('dashboard_settings').select('*').eq('agency_id', user.id).limit(1).single()
     ])
 
     const campaigns = campaignsResult.data

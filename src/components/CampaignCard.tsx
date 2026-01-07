@@ -27,7 +27,9 @@ interface CampaignCardProps {
     role?: string
     onClick?: () => void
     onPriorityChange?: (id: string, priority: PriorityLevel) => void
+    onPriorityChange?: (id: string, priority: PriorityLevel) => void
     onStatusChange?: (id: string, status: CampaignStatus) => void
+    primaryColor?: string
 }
 
 const statusConfig: Record<CampaignStatus, { label: string; color: string; cardBg: string; dot?: string }> = {
@@ -71,7 +73,7 @@ const priorityConfig = {
     }
 }
 
-export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onStatusChange, onPriorityChange }: CampaignCardProps) {
+export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onStatusChange, onPriorityChange, primaryColor = '#18181b' }: CampaignCardProps) {
     const [isOpen, setIsOpen] = useState<'status' | 'priority' | null>(null)
     const buttonRef = useRef<HTMLButtonElement>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -252,7 +254,7 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="h-9 w-9 md:h-8 md:w-8 flex items-center justify-center bg-zinc-900 text-white hover:bg-blue-600 rounded-xl md:rounded-full transition-all shadow-md hover:shadow-lg hover:scale-110 active:scale-95 shrink-0"
+                        className="h-9 w-9 md:h-8 md:w-8 flex items-center justify-center text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl md:rounded-full transition-all shadow-md hover:shadow-lg hover:scale-110 active:scale-95 shrink-0"
                     >
                         <ExternalLink className="h-4 w-4 md:h-4 md:w-4" />
                     </a>

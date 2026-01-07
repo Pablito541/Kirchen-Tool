@@ -78,7 +78,7 @@ export function UserMenu({ profile, onOpenSettings, onOpenAgencySettings }: User
                                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-all group"
                             >
                                 <Eye className="h-4 w-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
-                                <span>Kunden-Ansicht</span>
+                                <span>Kunden Login erstellen</span>
                             </button>
                         )}
 
