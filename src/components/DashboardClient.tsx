@@ -252,9 +252,9 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                 console.error('Delete action failed:', result.error)
                 alert('Fehler beim Löschen: ' + result.error)
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Unexpected error during delete:', error)
-            alert('Ein unerwarteter Fehler ist aufgetreten.')
+            alert('Ein unerwarteter Fehler ist aufgetreten: ' + (error?.message || JSON.stringify(error)))
         }
     }
 
