@@ -63,34 +63,7 @@
   /* Use sans as default heading font for now */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0c0a09;
-    /* Stone 950 */
-    --foreground: #fafaf9;
-    --card: #1c1917;
-    /* Stone 900 */
-    --card-foreground: #fafaf9;
-    --popover: #1c1917;
-    --popover-foreground: #fafaf9;
-    --primary: #fafaf9;
-    --primary-foreground: #1c1917;
-    --secondary: #292524;
-    /* Stone 800 */
-    --secondary-foreground: #fafaf9;
-    --muted: #292524;
-    --muted-foreground: #a8a29e;
-    /* Stone 400 */
-    --accent: #292524;
-    --accent-foreground: #fafaf9;
-    --destructive: #7f1d1d;
-    --destructive-foreground: #fafaf9;
-    --border: #292524;
-    --input: #292524;
-    --ring: #d6d3d1;
-    /* Stone 300 */
-  }
-}
+
 
 body {
   background: var(--background);
