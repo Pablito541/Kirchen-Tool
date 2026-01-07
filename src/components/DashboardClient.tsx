@@ -294,12 +294,12 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                     <div className="mx-auto max-w-5xl px-4 md:px-8">
                         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 md:mb-12">
                             <div className="space-y-1">
-                                <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-blue-600">
+                                <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-accent-blue">
                                     {`Willkommen, ${profile.full_name || 'Nutzer'}!`}
                                 </h2>
                                 <p className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight leading-tight flex items-center gap-4">
                                     Aktive Kampagnen
-                                    <span className="inline-flex items-center justify-center h-8 min-w-[2rem] px-2 rounded-full bg-zinc-900 text-white text-sm font-bold shadow-lg shadow-zinc-200">
+                                    <span className="inline-flex items-center justify-center h-8 min-w-[2rem] px-2 rounded-full bg-brand text-white text-sm font-bold shadow-lg shadow-zinc-200">
                                         {activeItems.length}
                                     </span>
                                 </p>
@@ -307,7 +307,6 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                             <CreateCampaignModal
                                 userId={userId}
                                 nextPriority={items.length + 1}
-                                onCreated={(nc) => setItems(prev => [...prev, nc])}
                                 onCreated={(nc) => setItems(prev => [...prev, nc])}
                             />
                         </div>
@@ -324,7 +323,6 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                                 onClick={() => openDetail(campaign)}
                                                 onStatusChange={handleStatusChange}
                                                 onPriorityChange={handlePriorityChange}
-                                                primaryColor={primaryColor}
                                             />
                                         </SortableItem>
                                     ))}
@@ -339,7 +337,6 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                         onClick={() => openDetail(campaign)}
                                         onStatusChange={handleStatusChange}
                                         onPriorityChange={handlePriorityChange}
-                                        primaryColor={primaryColor}
                                     />
                                 ))
                             )}
@@ -356,84 +353,77 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                 </DroppableSection>
 
                 {/* Future Projects Zone */}
-                {(!brandingSettings || brandingSettings.show_future_projects || role === 'agency') && (
-                    <DroppableSection id="future-container" className="py-12 md:py-20 min-h-[500px] relative">
-                        <div className="mx-auto max-w-5xl px-4 md:px-8">
-                            <div className="mb-8 md:mb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-[10px] md:text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Ausblick</h2>
-                                    <p className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
-                                        Zukünftige Kampagnen
-                                        <span className="inline-flex items-center justify-center h-7 min-w-[1.75rem] px-2 rounded-full bg-zinc-100 text-zinc-500 text-xs font-bold">
-                                            {futureItems.length}
-                                        </span>
+                <DroppableSection id="future-container" className="py-12 md:py-20 min-h-[500px] relative">
+                    <div className="mx-auto max-w-5xl px-4 md:px-8">
+                        <div className="mb-8 md:mb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h2 className="text-[10px] md:text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Ausblick</h2>
+                                <p className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
+                                    Zukünftige Kampagnen
+                                    <span className="inline-flex items-center justify-center h-7 min-w-[1.75rem] px-2 rounded-full bg-zinc-100 text-zinc-500 text-xs font-bold">
+                                        {futureItems.length}
+                                    </span>
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <div className="space-y-4">
+                            {isMounted ? (
+                                <SortableContext items={futureItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                                    {futureItems.map((campaign, index) => (
+                                        <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
+                                            <CampaignCard
+                                                campaign={{ ...campaign, priority: index + 1 }}
+                                                role={role}
+                                                onClick={() => openDetail(campaign)}
+                                                onStatusChange={handleStatusChange}
+                                                onPriorityChange={handlePriorityChange}
+                                            />
+                                        </SortableItem>
+                                    ))}
+                                </SortableContext>
+                            ) : (
+                                futureItems.map((campaign, index) => (
+                                    <CampaignCard
+                                        key={campaign.id}
+                                        campaign={{ ...campaign, priority: index + 1 }}
+                                        role={role}
+                                        onClick={() => openDetail(campaign)}
+                                        onStatusChange={handleStatusChange}
+                                        onPriorityChange={handlePriorityChange}
+                                    />
+                                ))
+                            )}
+                            {futureItems.length === 0 && (
+                                <div className="border-2 border-dashed border-zinc-200 rounded-[2.5rem] py-24 flex flex-col items-center justify-center text-center px-6 bg-zinc-50/50">
+                                    <p className="font-black text-xl text-zinc-900 tracking-tight">Keine zukünftigen Kampagnen</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] mt-3 text-zinc-400 max-w-[280px] md:max-w-none leading-relaxed">
+                                        Hier erscheinen Projekte, die für eine spätere Umsetzung geplant sind.
                                     </p>
                                 </div>
-                                {brandingSettings && !brandingSettings.show_future_projects && role === 'agency' && (
-                                    <div className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100 italic w-fit">
-                                        Nur für Agentur sichtbar
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="space-y-4">
-                                {isMounted ? (
-                                    <SortableContext items={futureItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                                        {futureItems.map((campaign, index) => (
-                                            <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
-                                                <CampaignCard
-                                                    campaign={{ ...campaign, priority: index + 1 }}
-                                                    role={role}
-                                                    onClick={() => openDetail(campaign)}
-                                                    onStatusChange={handleStatusChange}
-                                                    onPriorityChange={handlePriorityChange}
-                                                    primaryColor={primaryColor}
-                                                />
-                                            </SortableItem>
-                                        ))}
-                                    </SortableContext>
-                                ) : (
-                                    futureItems.map((campaign, index) => (
-                                        <CampaignCard
-                                            key={campaign.id}
-                                            campaign={{ ...campaign, priority: index + 1 }}
-                                            role={role}
-                                            onClick={() => openDetail(campaign)}
-                                            onStatusChange={handleStatusChange}
-                                            onPriorityChange={handlePriorityChange}
-                                            primaryColor={primaryColor}
-                                        />
-                                    ))
-                                )}
-                                {futureItems.length === 0 && (
-                                    <div className="border-2 border-dashed border-zinc-200 rounded-[2.5rem] py-24 flex flex-col items-center justify-center text-center px-6 bg-zinc-50/50">
-                                        <p className="font-black text-xl text-zinc-900 tracking-tight">Keine zukünftigen Kampagnen</p>
-                                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] mt-3 text-zinc-400 max-w-[280px] md:max-w-none leading-relaxed">
-                                            Hier erscheinen Projekte, die für eine spätere Umsetzung geplant sind.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="mt-24 pt-12 border-t border-black/5 text-center px-4 md:px-0">
-                                <a
-                                    href="/archive"
-                                    className="group relative inline-flex items-center gap-6 px-10 py-6 bg-white border border-black/5 rounded-[2.5rem] shadow-premium hover:shadow-2xl hover:border-zinc-200 transition-all duration-500"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-zinc-900 group-hover:rotate-[-12deg] transition-all duration-500">
-                                            <History className="h-5 w-5 text-zinc-400 group-hover:text-white" />
-                                        </div>
-                                        <div className="flex flex-col items-start gap-0.5">
-                                            <span className="text-sm font-black text-zinc-900 uppercase tracking-[0.2em] group-hover:text-zinc-600 transition-colors">Vorherige Projekte</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-8 h-[1px] bg-zinc-200 group-hover:bg-zinc-900 group-hover:w-12 transition-all duration-500" />
-                                </a>
-                            </div>
+                            )}
                         </div>
-                    </DroppableSection>
-                )}
+
+                        <div className="mt-24 pt-12 border-t border-black/5 text-center px-4 md:px-0">
+                            <a
+                                href="/archive"
+                                className="group relative inline-flex items-center gap-6 px-10 py-6 bg-white border border-black/5 rounded-[2.5rem] shadow-premium hover:shadow-2xl hover:border-zinc-200 transition-all duration-500"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-zinc-900 group-hover:rotate-[-12deg] transition-all duration-500">
+                                        <History className="h-5 w-5 text-zinc-400 group-hover:text-white" />
+                                    </div>
+                                    <div className="flex flex-col items-start gap-0.5">
+                                        <span className="text-sm font-black text-zinc-900 uppercase tracking-[0.2em] group-hover:text-zinc-600 transition-colors">Vorherige Projekte</span>
+                                    </div>
+                                </div>
+                                <div className="w-8 h-[1px] bg-zinc-200 group-hover:bg-zinc-900 group-hover:w-12 transition-all duration-500" />
+                            </a>
+                        </div>
+                    </div>
+                </DroppableSection>
+
             </DndContext>
 
             <CampaignDetailModal
@@ -445,25 +435,20 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                 onDelete={handleDeleteCampaign}
                 onStatusChange={handleStatusChange}
                 onPriorityChange={handlePriorityChange}
-                onPriorityChange={handlePriorityChange}
                 role={role}
-                primaryColor={primaryColor}
             />
 
             <ProfileSettingsModal
                 isOpen={isSettingsOpen}
                 onOpenChange={setIsSettingsOpen}
                 profile={profile}
-                primaryColor={primaryColor}
             />
 
             <AgencySettingsModal
                 isOpen={isAgencySettingsOpen}
                 onOpenChange={setIsAgencySettingsOpen}
-                onOpenChange={setIsAgencySettingsOpen}
                 agencyId={userId}
-                primaryColor={primaryColor}
             />
-        </div>
+        </div >
     )
 }

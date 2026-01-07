@@ -457,7 +457,7 @@ export function CampaignDetailModal({
                                                 </Button>
                                                 <Button
                                                     onClick={handleSave}
-                                                    className="bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl md:rounded-2xl font-bold px-6 h-12 md:h-11 flex items-center justify-center gap-2 shadow-lg shadow-black/10"
+                                                    className="bg-brand text-white hover:bg-zinc-800 rounded-xl md:rounded-2xl font-bold px-6 h-12 md:h-11 flex items-center justify-center gap-2 shadow-lg shadow-black/10"
                                                     disabled={loading}
                                                 >
                                                     <Save className="h-4 w-4" />
@@ -467,7 +467,7 @@ export function CampaignDetailModal({
                                         ) : (
                                             <Button
                                                 onClick={() => setIsEditing(true)}
-                                                className="bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl md:rounded-2xl font-bold px-8 h-12 md:h-11 shadow-lg shadow-black/10 transition-all active:scale-95"
+                                                className="bg-brand text-white hover:bg-zinc-800 rounded-xl md:rounded-2xl font-bold px-8 h-12 md:h-11 shadow-lg shadow-black/10 transition-all active:scale-95"
                                             >
                                                 Bearbeiten
                                             </Button>

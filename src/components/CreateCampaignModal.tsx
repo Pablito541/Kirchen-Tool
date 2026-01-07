@@ -12,10 +12,9 @@ interface CreateCampaignModalProps {
     userId: string
     nextPriority: number
     onCreated?: (campaign: any) => void
-    primaryColor?: string
 }
 
-export function CreateCampaignModal({ userId, nextPriority, onCreated, primaryColor = '#18181b' }: CreateCampaignModalProps) {
+export function CreateCampaignModal({ userId, nextPriority, onCreated }: CreateCampaignModalProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -58,8 +57,7 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated, primaryCo
         <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
             <Dialog.Trigger asChild>
                 <button
-                    className="flex items-center gap-2 text-white px-6 py-3 rounded-2xl text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-black/10 active:scale-95 group"
-                    style={{ backgroundColor: primaryColor }}
+                    className="flex items-center gap-2 text-white bg-brand px-6 py-3 rounded-2xl text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-black/10 active:scale-95 group"
                 >
                     <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
                     Neue Kampagne
@@ -113,8 +111,7 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated, primaryCo
                         <Button
                             type="submit"
                             disabled={loading}
-                            className="w-full h-14 text-white hover:brightness-110 rounded-2xl font-bold mt-4 shadow-lg shadow-black/10 transition-all active:scale-95"
-                            style={{ backgroundColor: primaryColor }}
+                            className="w-full h-14 bg-brand text-white hover:brightness-110 rounded-2xl font-bold mt-4 shadow-lg shadow-black/10 transition-all active:scale-95"
                         >
                             {loading ? 'Wird gespeichert...' : 'Kampagne speichern'}
                         </Button>

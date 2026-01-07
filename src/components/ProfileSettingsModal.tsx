@@ -14,7 +14,6 @@ interface ProfileSettingsModalProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
     profile: any
-    profile: any
 }
 
 export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileSettingsModalProps) {
@@ -106,7 +105,7 @@ export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileS
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={uploading}
-                                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-zinc-900 text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-zinc-800 transition-all active:scale-95 disabled:opacity-50"
+                                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-brand text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-zinc-800 transition-all active:scale-95 disabled:opacity-50"
                                 >
                                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                                 </button>
@@ -140,7 +139,7 @@ export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileS
                             <Button
                                 onClick={handleSaveProfile}
                                 disabled={loading}
-                                className="w-full h-14 bg-zinc-900 text-white hover:bg-zinc-800 rounded-2xl font-bold transition-all active:scale-95"
+                                className="w-full h-14 bg-brand text-white hover:bg-zinc-800 rounded-2xl font-bold transition-all active:scale-95"
                             >
                                 {loading ? 'Speichere...' : 'Einstellungen speichern'}
                             </Button>
