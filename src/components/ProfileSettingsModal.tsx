@@ -14,10 +14,10 @@ interface ProfileSettingsModalProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
     profile: any
-    primaryColor?: string
+    profile: any
 }
 
-export function ProfileSettingsModal({ isOpen, onOpenChange, profile, primaryColor = '#18181b' }: ProfileSettingsModalProps) {
+export function ProfileSettingsModal({ isOpen, onOpenChange, profile }: ProfileSettingsModalProps) {
     const [loading, setLoading] = useState(false)
     const [fullName, setFullName] = useState(profile?.full_name || '')
     const [uploading, setUploading] = useState(false)
@@ -140,8 +140,7 @@ export function ProfileSettingsModal({ isOpen, onOpenChange, profile, primaryCol
                             <Button
                                 onClick={handleSaveProfile}
                                 disabled={loading}
-                                className="w-full h-14 text-white hover:brightness-110 rounded-2xl font-bold transition-all active:scale-95"
-                                style={{ backgroundColor: primaryColor }}
+                                className="w-full h-14 bg-zinc-900 text-white hover:bg-zinc-800 rounded-2xl font-bold transition-all active:scale-95"
                             >
                                 {loading ? 'Speichere...' : 'Einstellungen speichern'}
                             </Button>

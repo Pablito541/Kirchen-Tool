@@ -27,9 +27,7 @@ interface CampaignCardProps {
     role?: string
     onClick?: () => void
     onPriorityChange?: (id: string, priority: PriorityLevel) => void
-    onPriorityChange?: (id: string, priority: PriorityLevel) => void
     onStatusChange?: (id: string, status: CampaignStatus) => void
-    primaryColor?: string
 }
 
 const statusConfig: Record<CampaignStatus, { label: string; color: string; cardBg: string; dot?: string }> = {
