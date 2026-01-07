@@ -3,8 +3,29 @@
 import { createAdminClient } from '@/utils/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { BRANDING, ROLES, type ActionResponse } from '@/lib/constants'
 
-export async function createChurchUser(prevState: any, formData: FormData) {
+// Helper to check permissions
+async function checkPermission(allowedRoles: string[]) {
+    const supabase = await createClient()
+    const { data: { user: requester } } = await supabase.auth.getUser()
+
+    if (!requester) return null
+
+    const { data: requesterProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', requester.id)
+        .single()
+
+    if (!requesterProfile || !allowedRoles.includes(requesterProfile.role)) {
+        return null
+    }
+
+    return { requester, requesterProfile }
+}
+
+export async function createClientUser(prevState: ActionResponse | null, formData: FormData): Promise<ActionResponse> {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const name = formData.get('name') as string
@@ -13,24 +34,12 @@ export async function createChurchUser(prevState: any, formData: FormData) {
         return { error: 'Bitte alle Felder ausfüllen.' }
     }
 
-    // 1. Check if requester is Admin
-    const supabase = await createClient()
-    const { data: { user: requester } } = await supabase.auth.getUser()
-
-    // Simple check: In a real app, check DB role. Here we trust the auth context for now 
-    // or we check the profile role if we want to be strict.
-    // For now, let's assume if they have access to the dashboard (which calls this), they are authorized, 
-    // but ideally we check the profile.
-
-    const { data: requesterProfile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', requester?.id)
-        .single()
-
-    if (requesterProfile?.role !== 'agency') {
+    // 1. Check if requester is Admin (Agency)
+    const permission = await checkPermission([ROLES.AGENCY])
+    if (!permission) {
         return { error: 'Keine Berechtigung.' }
     }
+    const { requester } = permission
 
     // 2. Create User via Admin API
     const supabaseAdmin = createAdminClient()
@@ -56,7 +65,7 @@ export async function createChurchUser(prevState: any, formData: FormData) {
         .insert({
             id: newUser.user.id,
             full_name: name,
-            role: 'church' // Force role to church
+            role: ROLES.CLIENT // Force role to client
         })
 
     if (profileError) {
@@ -64,11 +73,11 @@ export async function createChurchUser(prevState: any, formData: FormData) {
         return { error: 'Profil konnte nicht erstellt werden: ' + profileError.message }
     }
 
-    // 4. Create Default Settings (Optional)
+    // 4. Create Default Settings
     await supabaseAdmin.from('dashboard_settings').insert({
-        church_id: newUser.user.id,
-        agency_id: requester?.id,
-        primary_color: '#3b82f6',
+        client_id: newUser.user.id,
+        agency_id: requester.id,
+        primary_color: BRANDING.DEFAULT_PRIMARY_COLOR,
         welcome_message: `Willkommen, ${name}!`,
         show_future_projects: true
     })
@@ -77,35 +86,22 @@ export async function createChurchUser(prevState: any, formData: FormData) {
     return { success: true, message: 'Kunde erfolgreich angelegt.' }
 }
 
-export async function getChurchUsers() {
-    const supabase = await createClient()
-    const { data: { user: requester } } = await supabase.auth.getUser()
-
-    const { data: requesterProfile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', requester?.id)
-        .single()
-
-    if (requesterProfile?.role !== 'agency') {
-        return []
-    }
+export async function getClientUsers() {
+    // 1. Check permission
+    const permission = await checkPermission([ROLES.AGENCY])
+    if (!permission) return []
 
     const supabaseAdmin = createAdminClient()
 
-    // Get all profiles with role 'church'
+    // Get all profiles with role 'client'
     const { data: profiles } = await supabaseAdmin
         .from('profiles')
         .select('*')
-        .eq('role', 'church')
+        .eq('role', ROLES.CLIENT)
         .order('created_at', { ascending: false })
 
-    // We can't easily join auth.users here, but we can try to fetch emails if needed.
-    // Since we created them, we might want to store email in profile?
-    // For now, let's just return profiles. If we need emails, we'd need to fetch auth users too.
-
     // Let's fetch auth users to get emails
-    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
 
     if (error || !profiles) return []
 
@@ -121,20 +117,9 @@ export async function getChurchUsers() {
     return enhancedProfiles
 }
 
-export async function deleteCampaignAction(id: string) {
-    const supabase = await createClient()
-    const { data: { user: requester } } = await supabase.auth.getUser()
-    if (!requester) return { error: 'Nicht authentifiziert.' }
-
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', requester.id)
-        .single()
-
-    if (profile?.role !== 'agency' && profile?.role !== 'church') {
-        return { error: 'Keine Berechtigung zum Löschen.' }
-    }
+export async function deleteCampaignAction(id: string): Promise<ActionResponse> {
+    const permission = await checkPermission([ROLES.AGENCY, ROLES.CLIENT])
+    if (!permission) return { error: 'Keine Berechtigung zum Löschen.' }
 
     const supabaseAdmin = createAdminClient()
     const { error } = await supabaseAdmin
@@ -149,20 +134,9 @@ export async function deleteCampaignAction(id: string) {
     return { success: true }
 }
 
-export async function updateCampaignStatusAction(id: string, status: string) {
-    const supabase = await createClient()
-    const { data: { user: requester } } = await supabase.auth.getUser()
-    if (!requester) return { error: 'Nicht authentifiziert.' }
-
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', requester.id)
-        .single()
-
-    if (profile?.role !== 'agency' && profile?.role !== 'church') {
-        return { error: 'Keine Berechtigung zur Statusänderung.' }
-    }
+export async function updateCampaignStatusAction(id: string, status: string): Promise<ActionResponse> {
+    const permission = await checkPermission([ROLES.AGENCY, ROLES.CLIENT])
+    if (!permission) return { error: 'Keine Berechtigung zur Statusänderung.' }
 
     const supabaseAdmin = createAdminClient()
     const { error } = await supabaseAdmin

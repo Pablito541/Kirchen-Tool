@@ -6,7 +6,7 @@ import { User, LogOut, Settings, Eye } from 'lucide-react'
 interface UserMenuProps {
     profile: {
         full_name: string
-        role: 'church' | 'agency'
+        role: 'client' | 'agency'
     }
     onOpenSettings?: () => void
     onOpenAgencySettings?: () => void
@@ -63,7 +63,7 @@ export function UserMenu({ profile, onOpenSettings, onOpenAgencySettings }: User
                         </div>
                         <div className="mt-3">
                             <span className="inline-flex px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 border border-zinc-200/50">
-                                {profile.role === 'church' ? 'Kundenkonto' : 'Agentur'}
+                                {profile.role === 'client' ? 'Kundenkonto' : 'Agentur'}
                             </span>
                         </div>
                     </div>
@@ -78,11 +78,11 @@ export function UserMenu({ profile, onOpenSettings, onOpenAgencySettings }: User
                                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-all group"
                             >
                                 <Eye className="h-4 w-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
-                                <span>Kirchen-Ansicht</span>
+                                <span>Kunden-Ansicht</span>
                             </button>
                         )}
 
-                        {onOpenSettings && profile.role !== 'church' && (
+                        {onOpenSettings && profile.role !== 'client' && (
                             <button
                                 onClick={() => {
                                     onOpenSettings()

@@ -1,5 +1,5 @@
 export const ROLES = {
-    CHURCH: 'church',
+    CLIENT: 'client',
     AGENCY: 'agency',
 } as const
 
@@ -24,3 +24,13 @@ export const DASHBOARD_SECTIONS = {
 export type Role = typeof ROLES[keyof typeof ROLES]
 export type CampaignStatus = typeof CAMPAIGN_STATUS[keyof typeof CAMPAIGN_STATUS]
 export type PriorityLevel = typeof PRIORITY_LEVEL[keyof typeof PRIORITY_LEVEL]
+
+export const BRANDING = {
+    DEFAULT_PRIMARY_COLOR: '#3b82f6',
+} as const
+
+export type ActionResponse = {
+    error?: string
+    success?: boolean
+    message?: string
+}

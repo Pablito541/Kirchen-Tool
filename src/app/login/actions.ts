@@ -51,7 +51,7 @@ export async function createProfile() {
     }
 
     const isEipMedia = user.email?.includes('@eip-media')
-    const role = isEipMedia ? 'agency' : 'church'
+    const role = isEipMedia ? 'agency' : 'client'
 
     const { error } = await supabase.from('profiles').insert([
         {

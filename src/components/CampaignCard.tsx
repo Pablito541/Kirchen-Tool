@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ExternalLink, ChevronDown, Flag } from 'lucide-react'
 import { cn } from '@/components/ui/button'
 
+import { ROLES } from '@/lib/constants'
+
 export type CampaignStatus = 'waiting' | 'in_preparation' | 'live' | 'completed'
 export type PriorityLevel = 'high' | 'medium' | 'low'
 
@@ -75,8 +77,8 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
     const dropdownRef = useRef<HTMLDivElement>(null)
     const [coords, setCoords] = useState<{ top: number; left: number; width: number; buttonWidth: number } | null>(null)
 
-    const canEditStatus = role === 'agency'
-    const canEditPriority = role === 'agency' || role === 'church'
+    const canEditStatus = role === ROLES.AGENCY
+    const canEditPriority = role === ROLES.AGENCY || role === ROLES.CLIENT
 
     const handleOpen = (e: React.MouseEvent, type: 'status' | 'priority') => {
         e.stopPropagation()
@@ -148,8 +150,8 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
         >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-5">
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                        {!isArchive && (
+                    <div className="flex items-center gap-2 mb-2.5">
+                        {!isArchive && campaign.priority < 900 && (
                             <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 px-1.5 py-0.5 rounded">
                                 #{campaign.priority}
                             </span>
@@ -188,16 +190,47 @@ export function CampaignCard({ campaign, isFocus, isArchive, role, onClick, onSt
                     ) : isFocus ? (
                         <button
                             onClick={(e) => handleOpen(e, 'status')}
+                            disabled={!canEditStatus}
                             className={cn(
                                 "flex-1 md:flex-none px-4 md:px-3 py-1.5 md:py-1.5 rounded-xl md:rounded-full text-[10px] md:text-[9px] font-black border uppercase tracking-wider transition-all flex items-center justify-center gap-2 md:gap-1.5",
                                 statusConfig[campaign.status].color,
-                                canEditStatus && "hover:brightness-95 active:scale-95 cursor-pointer"
+                                canEditStatus ? "hover:brightness-95 active:scale-95 cursor-pointer" : "cursor-default"
                             )}
                         >
                             {statusConfig[campaign.status].label}
                             {canEditStatus && <ChevronDown className={cn("h-3.5 w-3.5 md:h-3 md:w-3 transition-transform", isOpen === 'status' && "rotate-180")} />}
                         </button>
                     ) : (
+                        /* Priority Toggle (Prominent in Future) - HIDE STATUS completely for clients here if waiting logic applies?
+                           Wait, previous request: "bei den zukünftigen sollen sie den status nicht sehen können" 
+                           Card doesn't show status in Future view (it shows Priority Toggle instead).
+                           Status is only visible if `isFocus` (Active) or Archive.
+                           Future items are NOT `isFocus`. They show Priority Toggle.
+                           So status is implicitly hidden in Future view already?
+                           Let's check `CampaignCard` usage in `DashboardClient`.
+                           Future items: `isFocus={false}`. 
+                           So they render the Priority Toggle block (lines 203+).
+                           They do NOT render the Status button.
+                           So "Future -> Hide Status" is effectively done by layout?
+                           Wait, let's double check.
+                           The Priority Toggle block (lines 204-216) shows the Priority.
+                           It does NOT show status.
+                           So future campaigns indeed DON'T show status on the card.
+                           So the requirement "Future -> No Status Visible" is met on the card level.
+                           Active campaigns (`isFocus={true}`) show Status.
+                           For Active, clients should see status but not edit.
+                           My edit above handles `canEditStatus` for `isFocus` block.
+                           Let's verify `canEditStatus` definition.
+                           Line 80: `const canEditStatus = role === ROLES.AGENCY`
+                           So for Client, `canEditStatus` is false.
+                           So the button will be disabled and no chevron. Perfect.
+
+                           Wait, one small thing. The user said "Future -> Hide Status".
+                           In `CampaignDetailModal`, I hid it.
+                           In `CampaignCard` (Future), it's already hidden (only Prio shows).
+                           So I just need to make sure the Active Card status is read-only.
+                           Which my proposed change below does.
+                        */
                         /* Priority Toggle (Prominent in Future) */
                         <button
                             onClick={(e) => handleOpen(e, 'priority')}

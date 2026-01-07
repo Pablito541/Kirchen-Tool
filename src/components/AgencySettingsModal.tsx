@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { useRouter } from 'next/navigation'
-import { createChurchUser, getChurchUsers } from '@/app/actions/admin'
+import { createClientUser, getClientUsers } from '@/app/actions/admin'
 
 interface AgencySettingsModalProps {
     isOpen: boolean
@@ -23,9 +23,9 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
         primary_color: '#3b82f6',
         welcome_message: 'Hier sind eure aktuellen Missionen.',
         show_future_projects: true,
-        church_id: ''
+        client_id: ''
     })
-    const [churchUser, setChurchUser] = useState<any>(null)
+    const [clientUser, setClientUser] = useState<any>(null)
 
     // User Management
     const [users, setUsers] = useState<any[]>([])
@@ -40,18 +40,18 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
             setFetching(true)
 
             // Load Users
-            const churchUsers = await getChurchUsers()
-            setUsers(churchUsers)
+            const clientUsers = await getClientUsers()
+            setUsers(clientUsers)
 
             // Select first user for design settings if available
-            if (churchUsers.length > 0) {
-                const firstUser = churchUsers[0]
-                setChurchUser(firstUser)
+            if (clientUsers.length > 0) {
+                const firstUser = clientUsers[0]
+                setClientUser(firstUser)
 
                 const { data: existingSettings } = await supabase
                     .from('dashboard_settings')
                     .select('*')
-                    .eq('church_id', firstUser.id)
+                    .eq('client_id', firstUser.id)
                     .single()
 
                 if (existingSettings) {
@@ -59,10 +59,10 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
                         primary_color: existingSettings.primary_color,
                         welcome_message: existingSettings.welcome_message,
                         show_future_projects: existingSettings.show_future_projects,
-                        church_id: firstUser.id
+                        client_id: firstUser.id
                     })
                 } else {
-                    setSettings(s => ({ ...s, church_id: firstUser.id }))
+                    setSettings(s => ({ ...s, client_id: firstUser.id }))
                 }
             }
             setFetching(false)
@@ -76,13 +76,13 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
         const { error } = await supabase
             .from('dashboard_settings')
             .upsert({
-                church_id: settings.church_id,
+                client_id: settings.client_id,
                 agency_id: agencyId,
                 primary_color: settings.primary_color,
                 welcome_message: settings.welcome_message,
                 show_future_projects: settings.show_future_projects,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'church_id' })
+            }, { onConflict: 'client_id' })
 
         if (!error) {
             router.refresh()
@@ -104,7 +104,7 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
         formData.append('password', newUser.password)
         formData.append('name', newUser.name)
 
-        const result = await createChurchUser(null, formData)
+        const result = await createClientUser(null, formData)
 
         if (result?.error) {
             setMsg({ type: 'error', text: result.error })
@@ -112,7 +112,7 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
             setMsg({ type: 'success', text: 'Kunde erfolgreich angelegt!' })
             setNewUser({ name: '', email: '', password: '' })
             // Reload users
-            const updatedUsers = await getChurchUsers()
+            const updatedUsers = await getClientUsers()
             setUsers(updatedUsers)
             router.refresh()
         }
@@ -304,7 +304,7 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
                                     <div className="space-y-2">
                                         <textarea
                                             className="w-full min-h-[100px] bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/10 transition-all font-sans"
-                                            placeholder="Botschaft für die Kirche..."
+                                            placeholder="Botschaft für den Kunden..."
                                             value={settings.welcome_message}
                                             onChange={(e) => setSettings({ ...settings, welcome_message: e.target.value })}
                                         />
@@ -328,7 +328,7 @@ export function AgencySettingsModal({ isOpen, onOpenChange, agencyId }: AgencySe
                                             <div className="text-left">
                                                 <p className="text-sm font-bold">Zükünftige Projekte anzeigen</p>
                                                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">
-                                                    {settings.show_future_projects ? 'Sichtbar für Kirche' : 'Nur für Agentur'}
+                                                    {settings.show_future_projects ? 'Sichtbar für Kunde' : 'Nur für Agentur'}
                                                 </p>
                                             </div>
                                         </div>

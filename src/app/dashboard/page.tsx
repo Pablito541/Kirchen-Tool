@@ -29,12 +29,12 @@ export default async function DashboardPage() {
     const isEipMedia = user.email?.includes('@eip-media')
 
     if (profile) {
-        // Runtime check: if current role is agency but email is not @eip-media, downgrade to church
+        // Runtime check: if current role is agency but email is not @eip-media, downgrade to client
         if (profile.role === 'agency' && !isEipMedia) {
-            console.log('Dashboard: Non-EIP user with agency role detected. Reverting to church role.')
+            console.log('Dashboard: Non-EIP user with agency role detected. Reverting to client role.')
             const { data: updatedProfile, error: updateError } = await supabase
                 .from('profiles')
-                .update({ role: 'church' })
+                .update({ role: 'client' })
                 .eq('id', user.id)
                 .select()
                 .single()
@@ -45,7 +45,7 @@ export default async function DashboardPage() {
         }
     } else {
         // Auto-create profile for password login if it doesn't exist
-        const role = isEipMedia ? 'agency' : 'church'
+        const role = isEipMedia ? 'agency' : 'client'
 
         const { data: newProfile, error: profileError } = await supabase.from('profiles').insert([
             {
@@ -76,8 +76,8 @@ export default async function DashboardPage() {
             .select('*')
             .neq('status', 'completed') // Zeige nur nicht-abgeschlossene auf dem Dashboard
             .order('priority', { ascending: true }),
-        profile.role === 'church'
-            ? supabase.from('dashboard_settings').select('*').eq('church_id', user.id).single()
+        profile.role === 'client'
+            ? supabase.from('dashboard_settings').select('*').eq('client_id', user.id).single()
             : Promise.resolve({ data: null })
     ])
 

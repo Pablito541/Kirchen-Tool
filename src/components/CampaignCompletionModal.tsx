@@ -8,10 +8,15 @@ import { Input } from './ui/input'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 
+interface Campaign {
+    id: string
+    // Add other properties if needed for display, but ID is critical for the update
+}
+
 interface CampaignCompletionModalProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
-    campaign: any
+    campaign: Campaign
     onComplete: () => void
 }
 

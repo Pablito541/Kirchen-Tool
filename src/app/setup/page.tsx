@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Church, Briefcase, Sparkles, Check } from 'lucide-react'
+import { User, Briefcase, Sparkles, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createProfile } from '../login/actions'
 
@@ -42,7 +42,7 @@ export default function SetupPage() {
     }, [router, supabase])
 
     const isAgency = user?.email?.includes('@eip-media')
-    const role = isAgency ? 'Agency' : 'Church'
+    const role = isAgency ? 'Agency' : 'Client'
 
     async function handleJoin() {
         setCreating(true)
@@ -70,7 +70,7 @@ export default function SetupPage() {
                         {isAgency ? (
                             <Briefcase className="h-12 w-12 text-zinc-900" />
                         ) : (
-                            <Church className="h-12 w-12 text-zinc-900" />
+                            <User className="h-12 w-12 text-zinc-900" />
                         )}
                     </div>
                 </div>

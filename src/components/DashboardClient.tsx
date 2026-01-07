@@ -11,11 +11,12 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Settings, Sliders, History } from 'lucide-react'
 import { deleteCampaignAction, updateCampaignStatusAction } from '@/app/actions/admin'
-import { DndContext, closestCenter } from '@dnd-kit/core'
+import { DndContext, closestCorners, useDroppable } from '@dnd-kit/core'
 import {
     SortableContext,
     verticalListSortingStrategy,
     useSortable,
+    arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useCampaignDnd } from '@/hooks/useCampaignDnd'
@@ -55,9 +56,18 @@ function SortableItem(props: any) {
     )
 }
 
+function DroppableSection({ id, children, className }: { id: string, children: React.ReactNode, className?: string }) {
+    const { setNodeRef } = useDroppable({ id })
+    return (
+        <section ref={setNodeRef} className={className}>
+            {children}
+        </section>
+    )
+}
+
 export default function DashboardClient({ campaigns, profile, userId, brandingSettings }: DashboardLayoutProps) {
     const role = profile.role
-    const { items, setItems, sensors, handleDragEnd } = useCampaignDnd(campaigns, role)
+    const { items, setItems, sensors } = useCampaignDnd(campaigns, role)
 
     // Local UI state
     const [isMounted, setIsMounted] = useState(false)
@@ -80,7 +90,12 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
         setItems(campaigns)
     }, [campaigns, setItems])
 
-    const activeItems = useMemo(() => items.filter((_, idx) => idx < 6), [items])
+    const activeItems = useMemo(() => {
+        return items
+            .filter(i => i.status === 'live' || i.status === 'in_preparation')
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999))
+    }, [items])
+
     const futureItems = useMemo(() => {
         const priorityWeights: Record<string, number> = {
             high: 0,
@@ -88,18 +103,117 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
             low: 2
         }
 
-        return items.filter((_, idx) => idx >= 6).sort((a, b) => {
-            const weightA = priorityWeights[a.priority_level || 'medium']
-            const weightB = priorityWeights[b.priority_level || 'medium']
+        return items
+            .filter(i => i.status === 'waiting')
+            .sort((a, b) => {
+                const weightA = priorityWeights[a.priority_level || 'medium']
+                const weightB = priorityWeights[b.priority_level || 'medium']
 
-            if (weightA !== weightB) {
-                return weightA - weightB
-            }
+                if (weightA !== weightB) {
+                    return weightA - weightB
+                }
 
-            // Same priority: oldest first (FIFO)
-            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        })
+                // Same priority: oldest first (FIFO)
+                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            })
     }, [items])
+
+    const handleDragOver = (event: any) => {
+        const { active, over } = event
+        if (!over) return
+
+        const activeId = active.id
+        const overId = over.id
+
+        // Find the containers
+        const activeContainer = active.data.current?.sortable?.containerId || (activeItems.find(i => i.id === activeId) ? 'active-container' : 'future-container')
+        const overContainer = over.data.current?.sortable?.containerId || overId
+
+        if (!overContainer || activeContainer === overContainer) {
+            return
+        }
+
+        // It triggers when moving between containers
+        const activeItem = items.find(i => i.id === activeId)
+        if (!activeItem) return
+
+        let newStatus = activeItem.status
+        if (overContainer === 'future-container' || overContainer === 'future-items') { // flexible check
+            newStatus = 'waiting'
+        } else {
+            newStatus = 'in_preparation'
+        }
+
+        if (activeItem.status !== newStatus) {
+            setItems((items) => {
+                const activeIndex = items.findIndex((i) => i.id === activeId)
+                const newItems = [...items]
+                // If moving to active, append to bottom (highest priority index)
+                let newPriority = activeItem.priority
+                if (newStatus === 'in_preparation' && activeItem.status === 'waiting') {
+                    // Find max priority of current active items
+                    const maxPriority = Math.max(...items.filter(i => i.status === 'live' || i.status === 'in_preparation').map(i => i.priority || 0), 0)
+                    newPriority = maxPriority + 1
+                }
+
+                newItems[activeIndex] = {
+                    ...newItems[activeIndex],
+                    status: newStatus,
+                    priority: newPriority
+                }
+                return newItems
+            })
+        }
+    }
+
+    const handleDragEnd = async (event: any) => {
+        const { active, over } = event
+        if (!over) return
+
+        const activeId = active.id
+        const overId = over.id
+
+        const activeItem = items.find(i => i.id === activeId)
+        if (!activeItem) return
+
+        // Calculate final status one last time to be sure
+        let newStatus = activeItem.status
+        const isOverFuture = overId === 'future-container' || items.find(i => i.id === overId)?.status === 'waiting'
+        const isActiveFuture = activeItem.status === 'waiting'
+
+        if (isOverFuture && !isActiveFuture) {
+            newStatus = 'waiting'
+        } else if (!isOverFuture && isActiveFuture) {
+            newStatus = 'in_preparation'
+        }
+
+        // Final reorder
+        const oldIndex = items.findIndex((item) => item.id === activeId)
+        const newIndex = items.findIndex((item) => item.id === overId)
+
+        let newItems = arrayMove(items, oldIndex, newIndex)
+
+        // Ensure status is correct in final array
+        newItems = newItems.map(i => i.id === activeId ? { ...i, status: newStatus } : i)
+
+        setItems(newItems)
+
+        // DB Updates
+        const { error } = await supabase.from('campaigns').upsert(
+            newItems.map((item, index) => ({
+                id: item.id,
+                title: item.title,
+                priority: item.status === 'waiting' ? 999 : (index + 1), // Future items don't strictly need priority index maintenance, but active items do
+                status: item.id === activeId ? newStatus : item.status,
+                updated_at: new Date().toISOString()
+            }))
+        )
+
+        if (error) {
+            console.error('Error updating campaign sort/status:', error)
+            router.refresh()
+        }
+    }
 
     const handleStatusChange = async (id: string, status: CampaignStatus) => {
         const result = await updateCampaignStatusAction(id, status)
@@ -128,8 +242,6 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
     }
 
     const handleDeleteCampaign = async (id: string) => {
-        if (!window.confirm('Möchtest du diese Kampagne wirklich unwiderruflich löschen?')) return
-
         const result = await deleteCampaignAction(id)
 
         if (result.success) {
@@ -166,20 +278,24 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
             </header>
 
             <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
+                sensors={role === ROLES.CLIENT ? [] : sensors}
+                collisionDetection={closestCorners}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
                 {/* Active Missions Zone */}
-                <section className="bg-white border-b border-black/5 pb-12 md:pb-20 pt-8 md:pt-12 relative overflow-hidden">
+                <DroppableSection id="active-container" className="bg-white border-b border-black/5 pb-12 md:pb-20 pt-8 md:pt-12 relative overflow-hidden">
                     <div className="mx-auto max-w-5xl px-4 md:px-8">
                         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 md:mb-12">
                             <div className="space-y-1">
                                 <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: primaryColor }}>
-                                    {role === 'church' && brandingSettings?.welcome_message ? brandingSettings.welcome_message : `Willkommen, ${profile.full_name || 'Nutzer'}!`}
+                                    {role === ROLES.CLIENT && brandingSettings?.welcome_message ? brandingSettings.welcome_message : `Willkommen, ${profile.full_name || 'Nutzer'}!`}
                                 </h2>
-                                <p className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight leading-tight">
+                                <p className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight leading-tight flex items-center gap-4">
                                     Aktive Kampagnen
+                                    <span className="inline-flex items-center justify-center h-8 min-w-[2rem] px-2 rounded-full bg-zinc-900 text-white text-sm font-bold shadow-lg shadow-zinc-200">
+                                        {activeItems.length}
+                                    </span>
                                 </p>
                             </div>
                             <CreateCampaignModal
@@ -228,16 +344,21 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                             )}
                         </div>
                     </div>
-                </section>
+                </DroppableSection>
 
                 {/* Future Projects Zone */}
                 {(!brandingSettings || brandingSettings.show_future_projects || role === 'agency') && (
-                    <section className="py-12 md:py-20 min-h-[500px] relative">
+                    <DroppableSection id="future-container" className="py-12 md:py-20 min-h-[500px] relative">
                         <div className="mx-auto max-w-5xl px-4 md:px-8">
                             <div className="mb-8 md:mb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
                                     <h2 className="text-[10px] md:text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Ausblick</h2>
-                                    <p className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight">Zukünftige Kampagnen</p>
+                                    <p className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
+                                        Zukünftige Kampagnen
+                                        <span className="inline-flex items-center justify-center h-7 min-w-[1.75rem] px-2 rounded-full bg-zinc-100 text-zinc-500 text-xs font-bold">
+                                            {futureItems.length}
+                                        </span>
+                                    </p>
                                 </div>
                                 {brandingSettings && !brandingSettings.show_future_projects && role === 'agency' && (
                                     <div className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100 italic w-fit">
@@ -249,10 +370,10 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                             <div className="space-y-4">
                                 {isMounted ? (
                                     <SortableContext items={futureItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                                        {futureItems.map((campaign) => (
+                                        {futureItems.map((campaign, index) => (
                                             <SortableItem key={campaign.id} id={campaign.id} disabled={false}>
                                                 <CampaignCard
-                                                    campaign={campaign}
+                                                    campaign={{ ...campaign, priority: index + 1 }}
                                                     role={role}
                                                     onClick={() => openDetail(campaign)}
                                                     onStatusChange={handleStatusChange}
@@ -262,10 +383,10 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                         ))}
                                     </SortableContext>
                                 ) : (
-                                    futureItems.map((campaign) => (
+                                    futureItems.map((campaign, index) => (
                                         <CampaignCard
                                             key={campaign.id}
-                                            campaign={campaign}
+                                            campaign={{ ...campaign, priority: index + 1 }}
                                             role={role}
                                             onClick={() => openDetail(campaign)}
                                             onStatusChange={handleStatusChange}
@@ -300,7 +421,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                 </a>
                             </div>
                         </div>
-                    </section>
+                    </DroppableSection>
                 )}
             </DndContext>
 
@@ -308,7 +429,7 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                 isOpen={isDetailOpen}
                 onOpenChange={setIsDetailOpen}
                 campaign={selectedCampaign}
-                canEdit={role === 'church' || role === 'agency'}
+                canEdit={role === ROLES.CLIENT || role === 'agency'}
                 onUpdate={handleUpdateCampaign}
                 onDelete={handleDeleteCampaign}
                 onStatusChange={handleStatusChange}

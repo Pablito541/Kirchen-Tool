@@ -25,7 +25,7 @@ export async function GET(request: Request) {
                     // Auto-assign role based on email (example logic)
                     // For now, let's assume specific domain is agency
                     const isAgency = user.email?.endsWith('@agency.com') || user.email?.startsWith('bruder@')
-                    const role = isAgency ? 'agency' : 'church'
+                    const role = isAgency ? 'agency' : 'client'
 
                     await supabase.from('profiles').insert([
                         {

@@ -3,12 +3,14 @@
 import { CampaignCompletionModal } from '@/components/CampaignCompletionModal'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, ExternalLink, Link as LinkIcon, Save, Trash2, RotateCcw, Calendar } from 'lucide-react'
+import { X, ExternalLink, Link as LinkIcon, Save, Trash2, RotateCcw, Calendar, LayoutDashboard } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { cn } from './ui/button'
+import { ROLES } from '@/lib/constants'
 
 interface CampaignDetailModalProps {
     isOpen: boolean
@@ -33,6 +35,7 @@ export function CampaignDetailModal({
     canEdit,
     role
 }: CampaignDetailModalProps) {
+    const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
     const [isCompletionOpen, setIsCompletionOpen] = useState(false)
@@ -44,6 +47,7 @@ export function CampaignDetailModal({
         description: campaign?.description || '',
         start_date: campaign?.start_date || '',
     })
+    const [isDeleteConfirm, setIsDeleteConfirm] = useState(false)
 
     useEffect(() => {
         if (campaign) {
@@ -62,9 +66,16 @@ export function CampaignDetailModal({
 
     const handleSave = async () => {
         setLoading(true)
+
+        // Sanitize data: convert empty strings to null for date fields
+        const updates = {
+            ...formData,
+            start_date: formData.start_date || null
+        }
+
         const { data, error } = await supabase
             .from('campaigns')
-            .update(formData)
+            .update(updates)
             .eq('id', campaign.id)
             .select()
             .single()
@@ -110,38 +121,44 @@ export function CampaignDetailModal({
                             <div className="space-y-6 max-w-2xl">
                                 {campaign.status !== 'completed' && (
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-5 mb-6">
-                                        <div className="flex items-center gap-4 shrink-0">
-                                            <span className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] bg-blue-50 px-4 py-1.5 rounded-full ring-1 ring-blue-100">
-                                                #{campaign.priority}
-                                            </span>
-                                        </div>
+                                        {campaign.priority < 900 && (
+                                            <div className="flex items-center gap-4 shrink-0">
+                                                <span className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] bg-blue-50 px-4 py-1.5 rounded-full ring-1 ring-blue-100">
+                                                    #{campaign.priority}
+                                                </span>
+                                            </div>
+                                        )}
 
                                         {/* Status and Priority Dropdowns - Available for all users */}
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            {/* Status Selector */}
-                                            <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-2xl border border-black/5 backdrop-blur-sm overflow-x-auto scrollbar-hide shrink-0">
-                                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2">Status:</span>
-                                                {statuses.filter(s => s.value !== 'completed').map((s) => (
-                                                    <button
-                                                        key={s.value}
-                                                        onClick={() => {
-                                                            setCurrentStatus(s.value)
-                                                            onStatusChange(campaign.id, s.value)
-                                                        }}
-                                                        className={cn(
-                                                            "px-2.5 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap",
-                                                            currentStatus === s.value
-                                                                ? s.color + " shadow-sm scale-105 ring-1 ring-black/5"
-                                                                : "text-zinc-500 hover:text-zinc-700 hover:bg-white/50"
-                                                        )}
-                                                    >
-                                                        {s.label}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+                                            {/* Status Selector - Only show for Agency or non-waiting campaigns for Client (Read Only) */}
+                                            {campaign.status !== 'waiting' || role === ROLES.AGENCY ? (
+                                                <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-2xl border border-black/5 backdrop-blur-sm overflow-x-auto scrollbar-hide shrink-0 max-w-full">
+                                                    <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2">Status:</span>
+                                                    {statuses.filter(s => s.value !== 'completed').map((s) => (
+                                                        <button
+                                                            key={s.value}
+                                                            disabled={role === ROLES.CLIENT}
+                                                            onClick={() => {
+                                                                setCurrentStatus(s.value)
+                                                                onStatusChange(campaign.id, s.value)
+                                                            }}
+                                                            className={cn(
+                                                                "px-2.5 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap",
+                                                                currentStatus === s.value
+                                                                    ? s.color + " shadow-sm scale-105 ring-1 ring-black/5"
+                                                                    : "text-zinc-500 hover:text-zinc-700 hover:bg-white/50",
+                                                                role === ROLES.CLIENT && "cursor-default active:scale-100 hover:text-zinc-500 hover:bg-transparent"
+                                                            )}
+                                                        >
+                                                            {s.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : null}
 
                                             {/* Priority Selector */}
-                                            <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-2xl border border-black/5 backdrop-blur-sm overflow-x-auto scrollbar-hide shrink-0">
+                                            <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-2xl border border-black/5 backdrop-blur-sm overflow-x-auto scrollbar-hide shrink-0 max-w-full">
                                                 <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2">Prio:</span>
                                                 {priorities.map((p) => (
                                                     <button
@@ -171,11 +188,11 @@ export function CampaignDetailModal({
                                         <Input
                                             value={formData.title}
                                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                            className="text-3xl md:text-5xl font-black tracking-tight border-none p-0 focus:ring-0 h-auto bg-transparent border-b border-zinc-200 placeholder:text-zinc-200 text-zinc-900"
+                                            className="text-2xl md:text-4xl font-black tracking-tight border-none p-0 focus:ring-0 h-auto bg-transparent border-b border-zinc-200 placeholder:text-zinc-200 text-zinc-900"
                                         />
                                     </>
                                 ) : (
-                                    <Dialog.Title className="text-3xl md:text-5xl font-black tracking-tighter text-zinc-900 leading-[1.1]">
+                                    <Dialog.Title className="text-2xl md:text-4xl font-black tracking-tighter text-zinc-900 leading-[1.1]">
                                         {campaign.title}
                                     </Dialog.Title>
                                 )}
@@ -194,13 +211,13 @@ export function CampaignDetailModal({
                                         </h3>
                                         {isEditing ? (
                                             <textarea
-                                                className="w-full min-h-[200px] rounded-3xl border border-zinc-200 p-6 text-base font-medium focus:ring-2 ring-zinc-100 outline-none transition-all bg-zinc-50/50 resize-y text-zinc-900"
+                                                className="w-full min-h-[200px] rounded-3xl border border-zinc-200 p-6 text-sm md:text-base font-medium focus:ring-2 ring-zinc-100 outline-none transition-all bg-zinc-50/50 resize-y text-zinc-900"
                                                 value={formData.description}
                                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                                 placeholder="Beschreibe die Kampagne..."
                                             />
                                         ) : (
-                                            <p className="text-base md:text-lg text-zinc-600 leading-relaxed font-medium whitespace-pre-wrap">
+                                            <p className="text-sm md:text-base text-zinc-600 leading-relaxed font-medium whitespace-pre-wrap break-words">
                                                 {campaign.description || <span className="text-zinc-400 italic">Keine Beschreibung vorhanden.</span>}
                                             </p>
                                         )}
@@ -352,15 +369,49 @@ export function CampaignDetailModal({
                             {canEdit && (
                                 <div className="pt-8 md:pt-10 flex flex-col md:flex-row gap-8 md:items-center justify-between border-t border-black/[0.03]">
                                     {campaign.status !== 'completed' && (
-                                        <button
-                                            onClick={() => onDelete(campaign.id)}
-                                            className="flex items-center justify-center md:justify-start gap-2 text-xs font-black text-red-400 hover:text-red-600 transition-all uppercase tracking-widest group order-2 md:order-1"
-                                        >
-                                            <Trash2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                                            Kampagne löschen
-                                        </button>
+                                        isDeleteConfirm ? (
+                                            <div className="flex items-center gap-2 order-2 md:order-1">
+                                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mr-2">Wirklich löschen?</span>
+                                                <button
+                                                    onClick={() => onDelete(campaign.id)}
+                                                    className="flex items-center justify-center gap-2 text-xs font-black text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-all uppercase tracking-widest"
+                                                >
+                                                    Ja
+                                                </button>
+                                                <button
+                                                    onClick={() => setIsDeleteConfirm(false)}
+                                                    className="flex items-center justify-center gap-2 text-xs font-black text-zinc-500 hover:text-zinc-700 px-3 py-1.5 rounded-lg transition-all uppercase tracking-widest bg-zinc-100 hover:bg-zinc-200"
+                                                >
+                                                    Nein
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => setIsDeleteConfirm(true)}
+                                                className="flex items-center justify-center md:justify-start gap-2 text-xs font-black text-red-400 hover:text-red-600 transition-all uppercase tracking-widest group order-2 md:order-1"
+                                            >
+                                                <Trash2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                                                Kampagne löschen
+                                            </button>
+                                        )
                                     )}
                                     <div className="flex flex-col sm:flex-row gap-3 md:gap-4 order-1 md:order-2">
+                                        {/* Board Button */}
+                                        {/* Board Button hidden for Core Phase
+                                        {!isEditing && (
+                                            <Button
+                                                onClick={() => {
+                                                    onOpenChange(false)
+                                                    router.push(`/campaigns/${campaign.id}`)
+                                                }}
+                                                className="bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50 rounded-xl md:rounded-2xl font-bold px-6 h-12 md:h-11 shadow-sm active:scale-95 transition-all w-full sm:w-auto flex items-center justify-center gap-2"
+                                            >
+                                                <LayoutDashboard className="h-4 w-4" />
+                                                Zum Board
+                                            </Button>
+                                        )}
+                                        */}
+
                                         {/* Completion Button for valid statuses */}
                                         {!isEditing && campaign.status !== 'completed' && (
                                             <Button
