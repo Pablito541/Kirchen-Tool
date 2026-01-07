@@ -57,7 +57,7 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated }: CreateC
         <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
             <Dialog.Trigger asChild>
                 <button
-                    className="flex items-center gap-2 text-white bg-brand px-6 py-3 rounded-2xl text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-black/10 active:scale-95 group"
+                    className="flex items-center gap-2 text-on-brand bg-brand px-6 py-3 rounded-2xl text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-black/10 active:scale-95 group"
                 >
                     <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
                     Neue Kampagne
@@ -84,7 +84,7 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated }: CreateC
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 required
-                                className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold placeholder:font-normal placeholder:text-zinc-400 text-zinc-900"
+                                className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold placeholder:font-normal placeholder:text-zinc-400 text-foreground"
                             />
                         </div>
 
@@ -94,14 +94,14 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated }: CreateC
                                 placeholder="https://..."
                                 value={formData.info_link}
                                 onChange={(e) => setFormData({ ...formData, info_link: e.target.value })}
-                                className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold placeholder:font-normal placeholder:text-zinc-400 text-zinc-900"
+                                className="h-14 rounded-2xl px-5 border-zinc-100 bg-zinc-50 focus:bg-white focus:ring-2 ring-zinc-100 transition-all font-bold placeholder:font-normal placeholder:text-zinc-400 text-foreground"
                             />
                         </div>
 
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Beschreibung / Briefing</label>
                             <textarea
-                                className="w-full min-h-[120px] rounded-2xl border border-zinc-100 bg-zinc-50 p-5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-900/5 focus:bg-white focus:border-zinc-900 transition-all placeholder:font-normal placeholder:text-zinc-400 text-zinc-900"
+                                className="w-full min-h-[120px] rounded-2xl border border-zinc-100 bg-zinc-50 p-5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-900/5 focus:bg-white focus:border-zinc-900 transition-all placeholder:font-normal placeholder:text-zinc-400 text-foreground"
                                 placeholder="Details zur Kampagne..."
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -111,7 +111,7 @@ export function CreateCampaignModal({ userId, nextPriority, onCreated }: CreateC
                         <Button
                             type="submit"
                             disabled={loading}
-                            className="w-full h-14 bg-brand text-white hover:brightness-110 rounded-2xl font-bold mt-4 shadow-lg shadow-black/10 transition-all active:scale-95"
+                            className="w-full h-14 bg-brand text-on-brand hover:brightness-110 rounded-2xl font-bold mt-4 shadow-lg shadow-black/10 transition-all active:scale-95"
                         >
                             {loading ? 'Wird gespeichert...' : 'Kampagne speichern'}
                         </Button>

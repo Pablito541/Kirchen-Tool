@@ -297,9 +297,9 @@ export default function DashboardClient({ campaigns, profile, userId, brandingSe
                                 <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-accent-blue">
                                     {`Willkommen, ${profile.full_name || 'Nutzer'}!`}
                                 </h2>
-                                <p className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight leading-tight flex items-center gap-4">
+                                <p className="text-3xl md:text-4xl font-black text-foreground tracking-tight leading-tight flex items-center gap-4">
                                     Aktive Kampagnen
-                                    <span className="inline-flex items-center justify-center h-8 min-w-[2rem] px-2 rounded-full bg-brand text-white text-sm font-bold shadow-lg shadow-zinc-200">
+                                    <span className="inline-flex items-center justify-center h-8 min-w-[2rem] px-2 rounded-full bg-brand text-on-brand text-sm font-bold shadow-lg shadow-zinc-200">
                                         {activeItems.length}
                                     </span>
                                 </p>
