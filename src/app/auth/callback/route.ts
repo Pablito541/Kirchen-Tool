@@ -5,7 +5,9 @@ export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
     // if "next" is in search params, use it as the redirection URL
-    const next = searchParams.get('next') ?? '/'
+    // only allow same-site relative paths (prevents open redirects like //evil.com)
+    const nextParam = searchParams.get('next') ?? '/'
+    const next = nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.startsWith('/\\') ? nextParam : '/'
 
     if (code) {
         const supabase = await createClient()
@@ -51,5 +53,5 @@ export async function GET(request: Request) {
     }
 
     // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+    return NextResponse.redirect(`${origin}/login?error=auth_code_error`)
 }

@@ -25,6 +25,20 @@ async function checkPermission(allowedRoles: string[]) {
     return { requester, requesterProfile }
 }
 
+// Agencies may touch every campaign, clients only the ones they created
+async function canModifyCampaign(permission: NonNullable<Awaited<ReturnType<typeof checkPermission>>>, campaignId: string) {
+    if (permission.requesterProfile.role === ROLES.AGENCY) return true
+
+    const supabaseAdmin = createAdminClient()
+    const { data } = await supabaseAdmin
+        .from('campaigns')
+        .select('created_by')
+        .eq('id', campaignId)
+        .single()
+
+    return data?.created_by === permission.requester.id
+}
+
 export async function createClientUser(prevState: ActionResponse | null, formData: FormData): Promise<ActionResponse> {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
@@ -130,6 +144,10 @@ export async function deleteCampaignAction(id: string): Promise<ActionResponse> 
             return { error: 'Server Konfiguration Fehler: Service Role Key fehlt.' }
         }
 
+        if (!(await canModifyCampaign(permission, id))) {
+            return { error: 'Keine Berechtigung zum Löschen dieser Kampagne.' }
+        }
+
         const supabaseAdmin = createAdminClient()
         const { error } = await supabaseAdmin
             .from('campaigns')
@@ -141,8 +159,8 @@ export async function deleteCampaignAction(id: string): Promise<ActionResponse> 
         revalidatePath('/dashboard')
         revalidatePath('/archive')
         return { success: true }
-    } catch (e: any) {
-        return { error: 'Server Exception: ' + (e?.message || JSON.stringify(e)) }
+    } catch (e) {
+        return { error: 'Server Exception: ' + (e instanceof Error ? e.message : JSON.stringify(e)) }
     }
 }
 
@@ -152,6 +170,10 @@ export async function updateCampaignStatusAction(id: string, status: string): Pr
 
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         return { error: 'Server Konfiguration Fehler: Service Role Key fehlt.' }
+    }
+
+    if (!(await canModifyCampaign(permission, id))) {
+        return { error: 'Keine Berechtigung für diese Kampagne.' }
     }
 
     const supabaseAdmin = createAdminClient()
@@ -170,7 +192,14 @@ export async function updateCampaignStatusAction(id: string, status: string): Pr
     return { success: true }
 }
 
-export async function saveDashboardSettings(settings: any): Promise<ActionResponse> {
+type DashboardSettingsInput = {
+    client_id: string
+    primary_color?: string
+    welcome_message?: string
+    show_future_projects?: boolean
+}
+
+export async function saveDashboardSettings(settings: DashboardSettingsInput): Promise<ActionResponse> {
     const permission = await checkPermission([ROLES.AGENCY])
     if (!permission) return { error: 'Keine Berechtigung.' }
 
@@ -179,7 +208,7 @@ export async function saveDashboardSettings(settings: any): Promise<ActionRespon
         .from('dashboard_settings')
         .upsert({
             client_id: settings.client_id,
-            agency_id: settings.agency_id,
+            agency_id: permission.requester.id, // never trust the client for this
             primary_color: settings.primary_color,
             welcome_message: settings.welcome_message,
             show_future_projects: settings.show_future_projects,
